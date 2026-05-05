@@ -122,17 +122,17 @@ function authUpdateNav() {
   if (!navActions) return;
 
   if (user) {
-    var adminLink = user.isAdmin ? '<a href="admin.html" class="btn btn-ghost">Admin</a>' : '';
+    var adminLink = user.isAdmin ? '<a href="/admin" class="btn btn-ghost">Admin</a>' : '';
     navActions.innerHTML =
       '<span style="font-size:0.88rem;color:var(--text-muted);font-weight:500;padding:0 4px;">Hi, ' + user.firstName + '</span>' +
       adminLink +
-      '<a href="profile.html" class="btn btn-ghost">My Profile</a>' +
+      '<a href="/profile" class="btn btn-ghost">My Profile</a>' +
       '<button class="btn btn-primary" id="navSignOutBtn">Sign Out</button>';
 
     document.getElementById("navSignOutBtn").addEventListener("click", function() {
       authLogout();
-      if (window.location.pathname.indexOf("profile.html") !== -1) {
-        window.location.href = "index.html";
+      if (window.location.pathname.indexOf("/profile") !== -1) {
+        window.location.href = "/";
       } else {
         authUpdateNav();
         authShowToast("Signed out successfully.");

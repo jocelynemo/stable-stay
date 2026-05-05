@@ -1,0 +1,187 @@
+    <!-- NAV -->
+    <nav class="navbar">
+      <a class="nav-logo" href="/">Stable<span>Stay</span></a>
+      <ul class="nav-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/buildings">Browse Rentals</a></li>
+        <li><a href="/#about">About</a></li>
+        <li><a href="/#contact">Contact</a></li>
+        <li><a href="/profile" class="active">My Profile</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button class="btn btn-ghost">Sign Out</button>
+      </div>
+    </nav>
+
+    <!-- PROFILE LAYOUT -->
+    <div class="profile-layout">
+
+      <!-- SIDEBAR -->
+      <aside class="profile-sidebar">
+        <div class="profile-avatar-wrap">
+          <div class="avatar-circle" id="avatarInitials">AR</div>
+          <div class="profile-name" id="profileDisplayName">Alex Rivera</div>
+          <div class="profile-email" id="profileDisplayEmail">alex.rivera@email.com</div>
+        </div>
+
+        <ul class="profile-nav">
+          <li>
+            <a href="#" class="active" data-section="sectionInfo">
+              👤 My Info
+            </a>
+          </li>
+          <li>
+            <a href="#" data-section="sectionFavorites">
+              ♥ Saved Listings
+            </a>
+          </li>
+          <li>
+            <a href="#" data-section="sectionSecurity">
+              🔒 Password &amp; Security
+            </a>
+          </li>
+          <li>
+            <a href="#" data-section="sectionPrefs">
+              ⚙️ Preferences
+            </a>
+          </li>
+        </ul>
+      </aside>
+
+      <!-- MAIN CONTENT -->
+      <main class="profile-main">
+
+        <!-- MY INFO -->
+        <section class="profile-section active" id="sectionInfo">
+          <h2 class="profile-section-title">My Info</h2>
+          <p class="profile-section-sub">Update your personal details below.</p>
+
+          <div class="profile-card">
+            <h3>Personal Details</h3>
+            <div class="info-grid">
+              <div class="info-field">
+                <label>First Name</label>
+                <input type="text" id="profileFirstName" />
+              </div>
+              <div class="info-field">
+                <label>Last Name</label>
+                <input type="text" id="profileLastName" />
+              </div>
+              <div class="info-field">
+                <label>Email</label>
+                <input type="email" id="profileEmail" />
+              </div>
+              <div class="info-field">
+                <label>Phone</label>
+                <input type="tel" id="profilePhone" />
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-card">
+            <h3>Location</h3>
+            <div class="info-grid">
+              <div class="info-field">
+                <label>City</label>
+                <input type="text" id="profileCity" />
+              </div>
+              <div class="info-field">
+                <label>State</label>
+                <input type="text" id="profileState" />
+              </div>
+              <div class="info-field">
+                <label>Zip Code</label>
+                <input type="text" id="profileZip" />
+              </div>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" id="saveProfile">Save Changes</button>
+        </section>
+
+        <!-- SAVED LISTINGS -->
+        <section class="profile-section" id="sectionFavorites">
+          <h2 class="profile-section-title">Saved Listings</h2>
+          <p class="profile-section-sub">All the rentals you've hearted. Click a card to view details.</p>
+
+          <div class="favorites-grid" id="favoritesGrid">
+            <!-- injected by profile.js -->
+          </div>
+        </section>
+
+        <!-- SECURITY -->
+        <section class="profile-section" id="sectionSecurity">
+          <h2 class="profile-section-title">Password &amp; Security</h2>
+          <p class="profile-section-sub">Keep your account secure.</p>
+
+          <div class="profile-card">
+            <h3>Change Password</h3>
+            <div class="info-grid">
+              <div class="info-field">
+                <label>Current Password</label>
+                <input type="password" id="pwCurrent" placeholder="••••••••" />
+              </div>
+              <div class="info-field">
+                <label>New Password</label>
+                <input type="password" id="pwNew" placeholder="••••••••" />
+              </div>
+              <div class="info-field">
+                <label>Confirm New Password</label>
+                <input type="password" id="pwConfirm" placeholder="••••••••" />
+              </div>
+            </div>
+            <div style="margin-top:20px;">
+              <button class="btn btn-primary" id="changePassword">Update Password</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- PREFERENCES -->
+        <section class="profile-section" id="sectionPrefs">
+          <h2 class="profile-section-title">Preferences</h2>
+          <p class="profile-section-sub">Customize how StableStay works for you.</p>
+
+          <div class="profile-card">
+            <h3>Search Defaults</h3>
+            <div class="info-grid">
+              <div class="info-field">
+                <label>Default City</label>
+                <input type="text" placeholder="e.g. Jersey City" />
+              </div>
+              <div class="info-field">
+                <label>Max Budget / mo</label>
+                <input type="number" placeholder="e.g. 2500" />
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-card">
+            <h3>Notifications</h3>
+            <div class="amenity-list">
+              <label class="amenity-checkbox">
+                <input type="checkbox" checked />
+                Email me when new listings match my filters
+              </label>
+              <label class="amenity-checkbox">
+                <input type="checkbox" />
+                Weekly digest of top listings
+              </label>
+              <label class="amenity-checkbox">
+                <input type="checkbox" checked />
+                Price drop alerts on saved listings
+              </label>
+            </div>
+            <div style="margin-top:20px;">
+              <button class="btn btn-primary">Save Preferences</button>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
+
+    <script src="/auth.js"></script>
+    <script src="/profile.js"></script>

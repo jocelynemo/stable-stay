@@ -128,7 +128,7 @@ function buildFavCard(listing) {
   card.appendChild(info);
 
   card.addEventListener("click", function() {
-    window.location.href = "building.html?id=" + listing.id;
+    window.location.href = "/buildings/building?id=" + listing.id;
   });
 
   return card;
@@ -150,7 +150,7 @@ function renderFavorites() {
     empty.style.padding = "48px 0";
     empty.style.textAlign = "center";
     empty.style.color = "var(--text-muted)";
-    empty.innerHTML = "No saved listings yet. <a href='buildings.html' style='color:var(--accent)'>Browse rentals</a> to start saving.";
+    empty.innerHTML = "No saved listings yet. <a href='/buildings' style='color:var(--accent)'>Browse rentals</a> to start saving.";
     grid.appendChild(empty);
     return;
   }
@@ -189,7 +189,7 @@ function init() {
   // Redirect to home if not logged in
   let user = authGetCurrentUser();
   if (user === null) {
-    window.location.href = "index.html";
+    window.location.href = "/";
     return;
   }
 

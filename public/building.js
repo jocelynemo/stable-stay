@@ -349,7 +349,7 @@ function renderHero() {
       '</div>' +
       '<div class="building-hero-actions">' +
         '<button class="btn-fav ' + favActive + '" id="favBtn">' + favText + '</button>' +
-        '<a href="buildings.html" class="btn btn-ghost">← Back</a>' +
+        '<a href="/buildings" class="btn btn-ghost">← Back</a>' +
       '</div>' +
     '</div>';
 
@@ -796,7 +796,7 @@ function init() {
     document.body.innerHTML =
       '<div style="text-align:center;padding:80px 24px;">' +
         '<h2 style="font-family:var(--font-display);margin-bottom:16px;">Building not found.</h2>' +
-        '<a href="buildings.html" class="btn btn-primary">← Back to Listings</a>' +
+        '<a href="/buildings" class="btn btn-primary">← Back to Listings</a>' +
       '</div>';
     return;
   }

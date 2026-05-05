@@ -124,7 +124,7 @@ function buildListingCard(listing) {
 
   // click card goes to buildings page
   card.addEventListener("click", function() {
-    window.location.href = "buildings.html";
+    window.location.href = "/buildings";
   });
 
   return card;
@@ -196,9 +196,9 @@ function handleHeroSearch() {
   let query = input.value.trim();
   if (query !== "") {
     // pass query as url param to buildings page
-    window.location.href = "buildings.html?search=" + encodeURIComponent(query);
+    window.location.href = "/buildings?search=" + encodeURIComponent(query);
   } else {
-    window.location.href = "buildings.html";
+    window.location.href = "/buildings";
   }
 }
 
@@ -286,7 +286,7 @@ function initSurvey() {
     if (resultTitle) resultTitle.textContent = titles[surveyAnswers.priority] || "Your Matches";
     if (resultText)  resultText.textContent  = "We filtered " + (surveyAnswers.beds === "3" ? "3+ BR" : surveyAnswers.beds + " BR") +
       " rentals under $" + maxPrice.toLocaleString() + "/mo prioritizing " + surveyAnswers.priority + ".";
-    if (resultLink)  resultLink.href = "buildings.html" + params;
+    if (resultLink)  resultLink.href = "/buildings" + params;
 
     document.getElementById("surveyForm").style.display = "none";
     var result = document.getElementById("surveyResult");

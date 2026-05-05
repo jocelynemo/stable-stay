@@ -151,7 +151,7 @@ function buildCard(listing) {
   card.appendChild(info);
 
   card.addEventListener("click", function() {
-    window.location.href = "building.html?id=" + listing.id;
+    window.location.href = "/buildings/building?id=" + listing.id;
   });
 
   return card;
@@ -279,7 +279,7 @@ function updateMapPins(listings) {
       '<strong>' + b.name + '</strong><br>' +
       '<span style="color:#888;font-size:0.82rem;">' + b.city + ', NJ</span><br>' +
       '<span style="color:#f0a03c;font-weight:700;font-size:1rem;">$' + b.price.toLocaleString() + '/mo</span><br>' +
-      '<a href="building.html?id=' + b.id + '" style="color:#f0a03c;font-size:0.82rem;">View Details →</a>' +
+      '<a href="/buildings/building?id=' + b.id + '" style="color:#f0a03c;font-size:0.82rem;">View Details →</a>' +
       '</div>'
     );
 

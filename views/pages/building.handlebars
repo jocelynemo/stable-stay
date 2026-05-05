@@ -1,0 +1,87 @@
+    <!-- NAV -->
+    <nav class="navbar">
+      <a class="nav-logo" href="/">Stable<span>Stay</span></a>
+      <ul class="nav-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/buildings">Browse Rentals</a></li>
+        <li><a href="/#about">About</a></li>
+        <li><a href="/#contact">Contact</a></li>
+        <li><a href="/profile">My Profile</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button class="btn btn-ghost">Sign In</button>
+        <button class="btn btn-primary">Get Started</button>
+      </div>
+    </nav>
+
+    <!-- BUILDING HERO (injected by building.js) -->
+    <div class="building-hero" id="buildingHero"></div>
+
+    <!-- DETAIL LAYOUT -->
+    <div class="building-detail-layout">
+
+      <!-- MAIN COLUMN -->
+      <div class="building-detail-main">
+
+        <!-- Building Info -->
+        <div class="detail-card">
+          <div class="detail-section-title">Building Details</div>
+          <div id="buildingInfoCard"></div>
+        </div>
+
+        <!-- Violation History -->
+        <div class="detail-card">
+          <div class="detail-section-title">Violation History</div>
+          <div id="violationsSection"></div>
+        </div>
+
+        <!-- Reviews -->
+        <div class="detail-card">
+          <div class="detail-section-title">Reviews</div>
+          <div id="reviewsSection"></div>
+        </div>
+
+        <!-- User-Reported Issues -->
+        <div class="detail-card">
+          <div class="detail-section-title">Reported Issues</div>
+          <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:18px;">
+            Report problems separate from official violations — pests, noise, maintenance neglect, etc.
+          </p>
+          <div id="issuesSection"></div>
+        </div>
+
+        <!-- Comments -->
+        <div class="detail-card">
+          <div class="detail-section-title">Comments &amp; Q&amp;A</div>
+          <div id="commentsSection"></div>
+        </div>
+
+      </div>
+
+      <!-- SIDEBAR -->
+      <div class="building-detail-sidebar">
+
+        <!-- Trust Score -->
+        <div class="detail-card">
+          <div class="detail-section-title">Trust Score</div>
+          <div id="trustScoreCard"></div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="detail-card">
+          <div class="detail-section-title">Quick Actions</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <a href="/buildings" class="btn btn-ghost full-width">← All Listings</a>
+            <a href="/profile" class="btn btn-ghost full-width">View Saved ♥</a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
+
+    <script src="/data.js"></script>
+    <script src="/auth.js"></script>
+    <script src="/building.js"></script>

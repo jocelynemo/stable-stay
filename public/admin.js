@@ -7,7 +7,7 @@ var ADMIN_EMAIL = "admin@stablestay.com";
 function adminGuard() {
   var user = authGetCurrentUser();
   if (!user || !user.isAdmin) {
-    window.location.href = "index.html";
+    window.location.href = "/";
     return false;
   }
   return true;
