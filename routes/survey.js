@@ -3,7 +3,7 @@ import { getAllBuildings } from '../data/buildings.js';
 
 const router = Router();
 
-//GET /survey/results
+// GET /survey/results
 router.get('/results', async (req, res) => {
   try {
     const { maxPrice, beds, sort } = req.query;
@@ -12,10 +12,12 @@ router.get('/results', async (req, res) => {
     if (maxPrice) {
       buildings = buildings.filter(b => b.price <= parseInt(maxPrice));
     }
+
     if (beds) {
       const bedCount = parseInt(beds);
       buildings = buildings.filter(b => bedCount >= 3 ? b.beds >= 3 : b.beds === bedCount);
     }
+
     if (sort === 'price') {
       buildings.sort((a, b) => a.price - b.price);
     } else if (sort === 'trust') {
