@@ -1,9 +1,14 @@
-// buildings.js - buildings/listings page logic
+//buildings.js: buildings/listings page logic
 
-var activeTab = "all";
-var favorites = [];
-var leafletMap = null;
-var mapMarkers = [];
+var activeTab      = "all";
+var favorites      = [];
+var leafletMap     = null;
+var mapMarkers     = [];
+var miniMaps       = [];
+var pendingMiniMaps = [];
+var currentPage    = 1;
+var PAGE_SIZE      = 20;
+var currentSort    = "default";
 
 var filters = {
   city: "",
@@ -20,7 +25,9 @@ function loadFavorites() {
 
 function isFavorited(id) {
   for (var i = 0; i < favorites.length; i++) {
-    if (favorites[i] === id) return true;
+    if (favorites[i] === id) {
+      return true;
+    }
   }
   return false;
 }
@@ -37,18 +44,24 @@ function toggleFavorite(id, btn) {
   }).then(function(r) { return r.json(); }).then(function(data) {
     if (data.success) {
       if (data.favorited) {
-        if (favorites.indexOf(id) === -1) favorites.push(id);
+        if (favorites.indexOf(id) === -1) {
+          favorites.push(id);
+        }
         btn.classList.add("active");
         btn.textContent = "♥";
         showToast("Saved to favorites ♥");
       } else {
         var idx = favorites.indexOf(id);
-        if (idx !== -1) favorites.splice(idx, 1);
+        if (idx !== -1) {
+          favorites.splice(idx, 1);
+        }
         btn.classList.remove("active");
         btn.textContent = "♡";
         showToast("Removed from favorites");
       }
-      if (activeTab === "favorites") applyAndRender();
+      if (activeTab === "favorites") {
+        applyAndRender();
+      }
     }
   }).catch(function() { showToast("Could not update favorites."); });
 }
@@ -60,25 +73,39 @@ function getFilteredListings() {
   for (var i = 0; i < all.length; i++) {
     var listing = all[i];
 
-    if (activeTab === "favorites" && !isFavorited(listing._id || listing.id)) continue;
+    if (activeTab === "favorites" && !isFavorited(listing._id || listing.id)) {
+      continue;
+    }
 
     if (filters.city !== "") {
-      if (listing.city.toLowerCase().indexOf(filters.city.toLowerCase()) === -1) continue;
+      if (listing.city.toLowerCase().indexOf(filters.city.toLowerCase()) === -1) {
+        continue;
+      }
     }
     if (filters.zip !== "") {
-      if (listing.zip.indexOf(filters.zip) === -1) continue;
+      if (listing.zip.indexOf(filters.zip) === -1) {
+        continue;
+      }
     }
     if (filters.minPrice !== "") {
-      if (listing.price < parseInt(filters.minPrice)) continue;
+      if (listing.price < parseInt(filters.minPrice)) {
+        continue;
+      }
     }
     if (filters.maxPrice !== "") {
-      if (listing.price > parseInt(filters.maxPrice)) continue;
+      if (listing.price > parseInt(filters.maxPrice)) {
+        continue;
+      }
     }
     if (filters.beds !== null) {
       if (filters.beds === 4) {
-        if (listing.beds < 4) continue;
+        if (listing.beds < 4) {
+          continue;
+        }
       } else {
-        if (listing.beds !== filters.beds) continue;
+        if (listing.beds !== filters.beds) {
+          continue;
+        }
       }
     }
     if (filters.amenities.length > 0) {
@@ -87,11 +114,19 @@ function getFilteredListings() {
         var found = false;
         var ams = listing.amenities || [];
         for (var k = 0; k < ams.length; k++) {
-          if (ams[k] === filters.amenities[j]) { found = true; break; }
+          if (ams[k] === filters.amenities[j]) {
+            found = true;
+            break;
+          }
         }
-        if (!found) { hasAll = false; break; }
+        if (!found) {
+          hasAll = false;
+          break;
+        }
       }
-      if (!hasAll) continue;
+      if (!hasAll) {
+        continue;
+      }
     }
 
     results.push(listing);
@@ -100,16 +135,30 @@ function getFilteredListings() {
 }
 
 function buildCard(listing) {
+  var listingId = listing._id || String(listing.id);
+
   var card = document.createElement("div");
   card.className = "listing-card";
+  card.addEventListener("click", function() {
+    window.location.href = "/buildings/" + listingId;
+  });
 
   var imgWrap = document.createElement("div");
   imgWrap.className = "listing-img";
 
-  var placeholder = document.createElement("div");
-  placeholder.className = "img-placeholder";
-  placeholder.innerHTML = '<span class="icon">🏢</span><span>' + listing.name + '</span>';
-  imgWrap.appendChild(placeholder);
+  if (listing.lat && listing.lng) {
+    var mapId = "mini-map-" + listingId;
+    var mapDiv = document.createElement("div");
+    mapDiv.className = "mini-map";
+    mapDiv.id = mapId;
+    imgWrap.appendChild(mapDiv);
+    pendingMiniMaps.push({ id: mapId, lat: listing.lat, lng: listing.lng });
+  } else {
+    var placeholder = document.createElement("div");
+    placeholder.className = "img-placeholder";
+    placeholder.innerHTML = '<span class="icon">🏢</span><span>' + listing.name + '</span>';
+    imgWrap.appendChild(placeholder);
+  }
 
   if (listing.badge) {
     var badge = document.createElement("span");
@@ -118,7 +167,6 @@ function buildCard(listing) {
     imgWrap.appendChild(badge);
   }
 
-  var listingId = listing._id || String(listing.id);
   var favBtn = document.createElement("button");
   favBtn.className = "fav-btn" + (isFavorited(listingId) ? " active" : "");
   favBtn.textContent = isFavorited(listingId) ? "♥" : "♡";
@@ -143,7 +191,7 @@ function buildCard(listing) {
 
   var location = document.createElement("div");
   location.className = "listing-location";
-  location.textContent = "📍 " + listing.city + ", NJ " + listing.zip;
+  location.textContent = "📍 " + listing.city + ", " + (listing.state || "NY") + " " + listing.zip;
 
   var meta = document.createElement("div");
   meta.className = "listing-meta";
@@ -158,20 +206,59 @@ function buildCard(listing) {
   info.appendChild(meta);
   card.appendChild(info);
 
-  card.addEventListener("click", function() {
-    window.location.href = "/buildings/" + (listing._id || listing.id);
-  });
-
   return card;
 }
 
-function renderListings(listings) {
+function initPendingMaps() {
+  var queue = pendingMiniMaps.slice();
+  pendingMiniMaps = [];
+  setTimeout(function() {
+    for (var i = 0; i < queue.length; i++) {
+      var item = queue[i];
+      var el = document.getElementById(item.id);
+      if (!el) {
+        continue;
+      }
+      var m = L.map(el, {
+        center:           [item.lat, item.lng],
+        zoom:             15,
+        zoomControl:      false,
+        scrollWheelZoom:  false,
+        dragging:         false,
+        touchZoom:        false,
+        doubleClickZoom:  false,
+        boxZoom:          false,
+        keyboard:         false,
+        attributionControl: false
+      });
+      L.tileLayer("https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png", {
+        maxZoom: 19
+      }).addTo(m);
+      var icon = L.divIcon({ className: "mini-map-marker", iconSize: [10, 10], iconAnchor: [5, 5] });
+      L.marker([item.lat, item.lng], { icon: icon, interactive: false }).addTo(m);
+      miniMaps.push(m);
+    }
+  }, 0);
+}
+
+function renderListings(listings, totalCount) {
   var grid = document.getElementById("listingsGrid");
-  if (!grid) return;
+  if (!grid) {
+    return;
+  }
+
+  for (var d = 0; d < miniMaps.length; d++) {
+    miniMaps[d].remove();
+  }
+  miniMaps = [];
+  pendingMiniMaps = [];
   grid.innerHTML = "";
 
+  var total   = totalCount !== undefined ? totalCount : listings.length;
   var countEl = document.getElementById("listingsCount");
-  if (countEl) countEl.innerHTML = "<strong>" + listings.length + "</strong> rentals found";
+  if (countEl) {
+    countEl.innerHTML = "<strong>" + total + "</strong> rentals found";
+  }
 
   if (listings.length === 0) {
     var empty = document.createElement("div");
@@ -187,27 +274,135 @@ function renderListings(listings) {
   for (var i = 0; i < listings.length; i++) {
     grid.appendChild(buildCard(listings[i]));
   }
+
+  initPendingMaps();
 }
 
 function applyAndRender() {
-  var listings = getFilteredListings();
-  renderListings(listings);
-  if (leafletMap) updateMapPins(listings);
+  var all = getFilteredListings();
+
+  if (currentSort === "price-asc") {
+    all.sort(function(a, b) { return a.price - b.price; });
+  } else if (currentSort === "price-desc") {
+    all.sort(function(a, b) { return b.price - a.price; });
+  } else if (currentSort === "sqft-desc") {
+    all.sort(function(a, b) { return b.sqft - a.sqft; });
+  } else if (currentSort === "trust-desc") {
+    all.sort(function(a, b) { return (b.trustScore || 0) - (a.trustScore || 0); });
+  }
+
+  var totalPages = Math.ceil(all.length / PAGE_SIZE) || 1;
+  if (currentPage > totalPages) {
+    currentPage = totalPages;
+  }
+  var start = (currentPage - 1) * PAGE_SIZE;
+  var page  = [];
+  for (var i = start; i < start + PAGE_SIZE && i < all.length; i++) {
+    page.push(all[i]);
+  }
+  renderListings(page, all.length);
+  renderPagination(all.length);
+  if (leafletMap) {
+    updateMapPins(all);
+  }
+}
+
+function renderPagination(totalCount) {
+  var container = document.getElementById('pagination');
+  if (!container) {
+    return;
+  }
+  container.innerHTML = '';
+
+  var totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1;
+  if (totalPages <= 1) {
+    return;
+  }
+
+  var prevBtn = document.createElement('button');
+  prevBtn.className = 'page-btn';
+  prevBtn.textContent = '← Prev';
+  if (currentPage === 1) {
+    prevBtn.disabled = true;
+  }
+  prevBtn.addEventListener('click', function() {
+    if (currentPage > 1) {
+      currentPage--;
+      applyAndRender();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  });
+  container.appendChild(prevBtn);
+
+  var maxButtons = 7;
+  var half = Math.floor(maxButtons / 2);
+  var startPage = currentPage - half;
+  var endPage   = currentPage + half;
+  if (startPage < 1) {
+    startPage = 1;
+    endPage   = Math.min(maxButtons, totalPages);
+  }
+  if (endPage > totalPages) {
+    endPage   = totalPages;
+    startPage = Math.max(1, totalPages - maxButtons + 1);
+  }
+
+  for (var p = startPage; p <= endPage; p++) {
+    var pageBtn = document.createElement('button');
+    pageBtn.className = 'page-btn';
+    pageBtn.textContent = String(p);
+    if (p === currentPage) {
+      pageBtn.classList.add('active');
+    }
+    (function(pageNum) {
+      pageBtn.addEventListener('click', function() {
+        currentPage = pageNum;
+        applyAndRender();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    })(p);
+    container.appendChild(pageBtn);
+  }
+
+  var nextBtn = document.createElement('button');
+  nextBtn.className = 'page-btn';
+  nextBtn.textContent = 'Next →';
+  if (currentPage === totalPages) {
+    nextBtn.disabled = true;
+  }
+  nextBtn.addEventListener('click', function() {
+    if (currentPage < totalPages) {
+      currentPage++;
+      applyAndRender();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  });
+  container.appendChild(nextBtn);
 }
 
 function readFilters() {
   var cityEl = document.getElementById("filterCity");
-  if (cityEl) filters.city = cityEl.value.trim();
+  if (cityEl) {
+    filters.city = cityEl.value.trim();
+  }
   var zipEl = document.getElementById("filterZip");
-  if (zipEl) filters.zip = zipEl.value.trim();
+  if (zipEl) {
+    filters.zip = zipEl.value.trim();
+  }
   var minEl = document.getElementById("filterMinPrice");
-  if (minEl) filters.minPrice = minEl.value.trim();
+  if (minEl) {
+    filters.minPrice = minEl.value.trim();
+  }
   var maxEl = document.getElementById("filterMaxPrice");
-  if (maxEl) filters.maxPrice = maxEl.value.trim();
+  if (maxEl) {
+    filters.maxPrice = maxEl.value.trim();
+  }
 
   filters.amenities = [];
   var boxes = document.querySelectorAll(".amenity-check:checked");
-  for (var i = 0; i < boxes.length; i++) filters.amenities.push(boxes[i].value);
+  for (var i = 0; i < boxes.length; i++) {
+    filters.amenities.push(boxes[i].value);
+  }
 }
 
 function resetFilters() {
@@ -216,12 +411,18 @@ function resetFilters() {
   var ids = ["filterCity", "filterZip", "filterMinPrice", "filterMaxPrice"];
   for (var i = 0; i < ids.length; i++) {
     var el = document.getElementById(ids[i]);
-    if (el) el.value = "";
+    if (el) {
+      el.value = "";
+    }
   }
   var bedBtns = document.querySelectorAll(".bed-btn");
-  for (var j = 0; j < bedBtns.length; j++) bedBtns[j].classList.remove("active");
+  for (var j = 0; j < bedBtns.length; j++) {
+    bedBtns[j].classList.remove("active");
+  }
   var boxes = document.querySelectorAll(".amenity-check");
-  for (var k = 0; k < boxes.length; k++) boxes[k].checked = false;
+  for (var k = 0; k < boxes.length; k++) {
+    boxes[k].checked = false;
+  }
 
   applyAndRender();
 }
@@ -231,7 +432,9 @@ function checkSearchParam() {
   var search = params.get("search");
   if (search) {
     var cityEl = document.getElementById("filterCity");
-    if (cityEl) cityEl.value = search;
+    if (cityEl) {
+      cityEl.value = search;
+    }
     filters.city = search;
   }
 
@@ -239,7 +442,9 @@ function checkSearchParam() {
   if (maxPrice) {
     filters.maxPrice = maxPrice;
     var maxEl = document.getElementById("filterMaxPrice");
-    if (maxEl) maxEl.value = maxPrice;
+    if (maxEl) {
+      maxEl.value = maxPrice;
+    }
   }
   var beds = params.get("beds");
   if (beds) {
@@ -253,24 +458,29 @@ function checkSearchParam() {
   }
 }
 
-// ── Leaflet map ───────────────────────────────────────────────────────────────
+//Leaflet map
 
 function initMap() {
-  if (leafletMap) return;
-  leafletMap = L.map("buildingsMap").setView([40.74, -74.03], 11);
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-    attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+  if (leafletMap) {
+    return;
+  }
+  leafletMap = L.map("buildingsMap", { attributionControl: false }).setView([40.74, -74.03], 11);
+  L.tileLayer("https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png", {
     maxZoom: 19
   }).addTo(leafletMap);
 }
 
 function updateMapPins(listings) {
-  for (var i = 0; i < mapMarkers.length; i++) mapMarkers[i].remove();
+  for (var i = 0; i < mapMarkers.length; i++) {
+    mapMarkers[i].remove();
+  }
   mapMarkers = [];
 
   for (var j = 0; j < listings.length; j++) {
     var b = listings[j];
-    if (!b.lat || !b.lng) continue;
+    if (!b.lat || !b.lng) {
+      continue;
+    }
 
     var marker = L.circleMarker([b.lat, b.lng], {
       radius: 10,
@@ -284,7 +494,7 @@ function updateMapPins(listings) {
     marker.bindPopup(
       '<div style="font-family:sans-serif;min-width:160px;">' +
       '<strong>' + b.name + '</strong><br>' +
-      '<span style="color:#888;font-size:0.82rem;">' + b.city + ', NJ</span><br>' +
+      '<span style="color:#888;font-size:0.82rem;">' + b.city + ', ' + (b.state || 'NY') + '</span><br>' +
       '<span style="color:#f0a03c;font-weight:700;font-size:1rem;">$' + b.price.toLocaleString() + '/mo</span><br>' +
       '<a href="/buildings/' + (b._id || b.id) + '" style="color:#f0a03c;font-size:0.82rem;">View Details →</a>' +
       '</div>'
@@ -316,13 +526,13 @@ function switchToGridView() {
 
 function showToast(message) {
   var toast = document.getElementById("toast");
-  if (!toast) return;
+  if (!toast) {
+    return;
+  }
   toast.textContent = message;
   toast.classList.add("show");
   setTimeout(function() { toast.classList.remove("show"); }, 2800);
 }
-
-// ── Init ──────────────────────────────────────────────────────────────────────
 
 function init() {
   loadFavorites();
@@ -332,9 +542,12 @@ function init() {
   var tabBtns = document.querySelectorAll(".tab-btn");
   for (var i = 0; i < tabBtns.length; i++) {
     tabBtns[i].addEventListener("click", function() {
-      for (var j = 0; j < tabBtns.length; j++) tabBtns[j].classList.remove("active");
+      for (var j = 0; j < tabBtns.length; j++) {
+        tabBtns[j].classList.remove("active");
+      }
       this.classList.add("active");
-      activeTab = this.getAttribute("data-tab");
+      activeTab   = this.getAttribute("data-tab");
+      currentPage = 1;
       applyAndRender();
     });
   }
@@ -348,38 +561,59 @@ function init() {
         this.classList.remove("active");
       } else {
         filters.beds = val;
-        for (var j = 0; j < bedBtns.length; j++) bedBtns[j].classList.remove("active");
+        for (var j = 0; j < bedBtns.length; j++) {
+          bedBtns[j].classList.remove("active");
+        }
         this.classList.add("active");
       }
+      currentPage = 1;
+      applyAndRender();
     });
   }
 
+  var liveInputIds = ["filterCity", "filterZip", "filterMinPrice", "filterMaxPrice"];
+  for (var li = 0; li < liveInputIds.length; li++) {
+    var liveEl = document.getElementById(liveInputIds[li]);
+    if (liveEl) {
+      liveEl.addEventListener("input", function() {
+        currentPage = 1;
+        readFilters();
+        applyAndRender();
+      });
+    }
+  }
+
   var applyBtn = document.getElementById("applyFilters");
-  if (applyBtn) applyBtn.addEventListener("click", function() { readFilters(); applyAndRender(); });
+  if (applyBtn) {
+    applyBtn.addEventListener("click", function() {
+      currentPage = 1;
+      readFilters();
+      applyAndRender();
+    });
+  }
 
   var resetBtn = document.getElementById("resetFilters");
-  if (resetBtn) resetBtn.addEventListener("click", resetFilters);
+  if (resetBtn) {
+    resetBtn.addEventListener("click", resetFilters);
+  }
 
   var sortSelect = document.getElementById("sortSelect");
   if (sortSelect) {
     sortSelect.addEventListener("change", function() {
-      var val = this.value;
-      var listings = getFilteredListings();
-      if (val === "price-asc") {
-        listings.sort(function(a, b) { return a.price - b.price; });
-      } else if (val === "price-desc") {
-        listings.sort(function(a, b) { return b.price - a.price; });
-      } else if (val === "sqft-desc") {
-        listings.sort(function(a, b) { return b.sqft - a.sqft; });
-      }
-      renderListings(listings);
+      currentSort = this.value;
+      currentPage = 1;
+      applyAndRender();
     });
   }
 
   var viewGridBtn = document.getElementById("viewGrid");
   var viewMapBtn  = document.getElementById("viewMap");
-  if (viewGridBtn) viewGridBtn.addEventListener("click", switchToGridView);
-  if (viewMapBtn)  viewMapBtn.addEventListener("click", switchToMapView);
+  if (viewGridBtn) {
+    viewGridBtn.addEventListener("click", switchToGridView);
+  }
+  if (viewMapBtn) {
+    viewMapBtn.addEventListener("click", switchToMapView);
+  }
 }
 
 document.addEventListener("DOMContentLoaded", init);
