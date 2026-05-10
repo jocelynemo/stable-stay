@@ -517,6 +517,21 @@ img { display: block; max-width: 100%; }
 
 .img-placeholder .icon { font-size: 2.2rem; }
 
+.mini-map {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.mini-map-marker {
+  width: 10px;
+  height: 10px;
+  background: var(--accent);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px rgba(240, 160, 60, 0.3), 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
 /* ===== HOW IT WORKS ===== */
 .how-it-works {
   background: var(--surface);
@@ -1010,6 +1025,26 @@ footer {
   letter-spacing: 0.1em;
   color: var(--text-muted);
   margin-bottom: 14px;
+}
+
+.filter-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: -4px;
+}
+
+.price-range-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.price-range-sep {
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  padding-bottom: 10px;
 }
 
 .filter-group {
