@@ -4,3 +4,4 @@ export * from './reviews.js';
 export * from './comments.js';
 export * from './issues.js';
 export * from './favorites.js';
+export * from './violations.js';
