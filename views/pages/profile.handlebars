@@ -9,7 +9,14 @@
         <li><a href="/profile" class="active">My Profile</a></li>
       </ul>
       <div class="nav-actions">
-        <button class="btn btn-ghost">Sign Out</button>
+        {{#if user}}
+          <span style="font-size:0.88rem;color:var(--text-muted);font-weight:500;padding:0 4px;">Hi, {{user.firstName}}</span>
+          {{#if user.isAdmin}}<a href="/admin" class="btn btn-ghost">Admin</a>{{/if}}
+          <a href="/signout" class="btn btn-primary">Sign Out</a>
+        {{else}}
+          <button class="btn btn-ghost" id="signInBtn">Sign In</button>
+          <button class="btn btn-primary" id="registerBtn">Get Started</button>
+        {{/if}}
       </div>
     </nav>
 
@@ -62,14 +69,16 @@
               <div class="info-field">
                 <label>First Name</label>
                 <input type="text" id="profileFirstName" />
+                <div id="fnError" style="color:var(--danger);font-size:0.8rem;min-height:1em;"></div>
               </div>
               <div class="info-field">
                 <label>Last Name</label>
                 <input type="text" id="profileLastName" />
+                <div id="lnError" style="color:var(--danger);font-size:0.8rem;min-height:1em;"></div>
               </div>
               <div class="info-field">
                 <label>Email</label>
-                <input type="email" id="profileEmail" />
+                <input type="email" id="profileEmail" autocomplete="email" />
               </div>
               <div class="info-field">
                 <label>Phone</label>
@@ -91,12 +100,13 @@
               </div>
               <div class="info-field">
                 <label>Zip Code</label>
-                <input type="text" id="profileZip" />
+                <input type="text" id="profileZip" autocomplete="postal-code" />
               </div>
             </div>
           </div>
 
           <button class="btn btn-primary" id="saveProfile">Save Changes</button>
+          <div id="profileMsg" style="display:none;padding:10px 14px;border-radius:6px;margin-top:12px;font-size:0.88rem;"></div>
         </section>
 
         <!-- SAVED LISTINGS -->
@@ -119,19 +129,21 @@
             <div class="info-grid">
               <div class="info-field">
                 <label>Current Password</label>
-                <input type="password" id="pwCurrent" placeholder="••••••••" />
+                <input type="password" id="pwCurrent" />
               </div>
               <div class="info-field">
                 <label>New Password</label>
-                <input type="password" id="pwNew" placeholder="••••••••" />
+                <input type="password" id="pwNew" />
               </div>
               <div class="info-field">
                 <label>Confirm New Password</label>
-                <input type="password" id="pwConfirm" placeholder="••••••••" />
+                <input type="password" id="pwConfirm" />
               </div>
             </div>
             <div style="margin-top:20px;">
+              <div id="pwError" style="display:none;color:var(--danger);font-size:0.85rem;margin-bottom:10px;"></div>
               <button class="btn btn-primary" id="changePassword">Update Password</button>
+              <div id="pwMsg" style="display:none;padding:10px 14px;border-radius:6px;margin-top:12px;font-size:0.88rem;"></div>
             </div>
           </div>
         </section>
@@ -146,11 +158,11 @@
             <div class="info-grid">
               <div class="info-field">
                 <label>Default City</label>
-                <input type="text" placeholder="e.g. Jersey City" />
+                <input type="text" />
               </div>
               <div class="info-field">
                 <label>Max Budget / mo</label>
-                <input type="number" placeholder="e.g. 2500" />
+                <input type="number" />
               </div>
             </div>
           </div>
@@ -183,5 +195,11 @@
     <!-- TOAST -->
     <div class="toast" id="toast"></div>
 
-    <script src="/auth.js"></script>
-    <script src="/profile.js"></script>
+    <script>
+      window.PROFILE_USER    = {{{userJson}}};
+      window.USER_FAVORITES  = {{{favoritesJson}}};
+      window.SESSION_LOGGED_IN = true;
+    </script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/profile-interactive.js"></script>
