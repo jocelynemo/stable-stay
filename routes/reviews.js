@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { addReview, updateReview, deleteReview } from '../data/reviews.js';
+import { addReview, updateReview, deleteReview, getReviewsForBuilding } from '../data/reviews.js';
+import { recomputeTrustScore } from '../data/buildings.js';
 
 const router = Router();
 
@@ -10,34 +11,48 @@ function requireAuth(req, res, next) {
   next();
 }
 
-// POST /reviews/:buildingId
+// POST /reviews/:buildingId - submit a new review
 router.post('/:buildingId', requireAuth, async (req, res) => {
   try {
-    const { rating, text } = req.body || {};
-    const review = await addReview(req.params.buildingId, req.session.user, rating, text);
+    const user = req.session.user;
+    const displayName = user.firstName + ' ' + user.lastName;
+    const { rating, text } = req.body;
+
+    const review = await addReview(req.params.buildingId, user._id, displayName, rating, text);
+
+    const reviews = await getReviewsForBuilding(req.params.buildingId);
+    await recomputeTrustScore(req.params.buildingId, reviews);
+
     res.json({ success: true, review });
   } catch (e) {
     res.status(400).json({ success: false, error: e.message });
   }
 });
 
-// PUT /reviews/:reviewId
+// PUT /reviews/:reviewId - edit own review
 router.put('/:reviewId', requireAuth, async (req, res) => {
   try {
-    const { rating, text } = req.body || {};
-    const u = req.session.user;
-    const review = await updateReview(req.params.reviewId, u._id, !!u.isAdmin, rating, text);
+    const { rating, text } = req.body;
+    const review = await updateReview(req.params.reviewId, req.session.user._id, rating, text);
+
+    const reviews = await getReviewsForBuilding(review.buildingId);
+    await recomputeTrustScore(review.buildingId, reviews);
+
     res.json({ success: true, review });
   } catch (e) {
     res.status(400).json({ success: false, error: e.message });
   }
 });
 
-// DELETE /reviews/:reviewId
+// DELETE /reviews/:reviewId - delete own review or admin
 router.delete('/:reviewId', requireAuth, async (req, res) => {
   try {
-    const u = req.session.user;
-    await deleteReview(req.params.reviewId, u._id, !!u.isAdmin);
+    const user = req.session.user;
+    const buildingId = await deleteReview(req.params.reviewId, user._id, user.isAdmin);
+
+    const reviews = await getReviewsForBuilding(buildingId);
+    await recomputeTrustScore(buildingId, reviews);
+
     res.json({ success: true });
   } catch (e) {
     res.status(400).json({ success: false, error: e.message });
