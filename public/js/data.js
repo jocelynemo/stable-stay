@@ -1,5 +1,5 @@
-// data.js - single source of truth for buildings data (loaded before all other scripts)
-// NOTE: Static fallback data only. Live data is served from MongoDB via /buildings routes.
+//data.js: single source of truth for buildings data (loaded before all other scripts)
+
 
 window.BUILDINGS_STATIC = [
   {
@@ -134,9 +134,11 @@ window.BUILDINGS_STATIC = [
   }
 ];
 
-// Returns buildings from the server (injected via buildingsJson in the template).
-// Falls back to BUILDINGS_STATIC if the server returned an empty array (DB not seeded).
+//Returns buildings from the server
+//Falls back to BUILDINGS_STATIC if the server returned an empty array
 window.getBuildings = function() {
-  if (window.BUILDINGS_BASE && window.BUILDINGS_BASE.length > 0) return window.BUILDINGS_BASE;
+  if (window.BUILDINGS_BASE && window.BUILDINGS_BASE.length > 0) {
+    return window.BUILDINGS_BASE;
+  }
   return window.BUILDINGS_STATIC;
 };
