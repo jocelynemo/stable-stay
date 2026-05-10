@@ -1,19 +1,28 @@
 {
-  "name": "StableStay",
+  "name": "stablestay",
   "version": "1.0.0",
-  "description": "A full-stack rental transparency platform",
-  "main": "app.js",
+  "description": "A full-stack web application that helps users discover, filter, and analyze NYC housing listings using open city datasets, including rent-stabilized building data and housing violations.",
+  "homepage": "https://github.com/livictor271/StableStay#readme",
+  "bugs": {
+    "url": "https://github.com/livictor271/StableStay/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/livictor271/StableStay.git"
+  },
+  "license": "ISC",
+  "author": "Jocelyn Mo, Victor Li, Tony Wu, Hadeer Motair",
   "type": "module",
+  "main": "app.js",
   "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node app.js",
     "seed": "node tasks/seed.js"
   },
   "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "connect-mongo": "^5.1.0",
-    "express": "^4.18.2",
-    "express-handlebars": "^7.1.2",
-    "express-session": "^1.17.3",
-    "mongodb": "^6.3.0"
+    "express": "^5.2.1",
+    "express-handlebars": "^9.0.1",
+    "express-session": "^1.19.0",
+    "mongodb": "^7.2.0"
   }
 }

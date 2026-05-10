@@ -1,96 +1,88 @@
 import { dbConnection } from '../config/mongoConnection.js';
 import { ObjectId } from 'mongodb';
+import { getBuildingById, recomputeTrustScore } from './buildings.js';
 
-async function col() { return (await dbConnection()).collection('reviews'); }
+async function col() {
+  return (await dbConnection()).collection('reviews');
+}
+
+function toPlain(doc) {
+  if (!doc) return null;
+  return { ...doc, _id: doc._id.toString() };
+}
 
 export async function getReviewsForBuilding(buildingId) {
-  if (!ObjectId.isValid(buildingId)) {
-    throw new Error('Invalid building id.');
-  }
   const c = await col();
-  return (await c.find({ buildingId: buildingId.toString() }).sort({ createdAt: -1 }).toArray()).map(toPlain);
+  const rows = await c.find({ buildingId }).sort({ createdAt: -1 }).toArray();
+  return rows.map(toPlain);
 }
 
 export async function getUserReviewForBuilding(buildingId, userId) {
   const c = await col();
-  const r = await c.findOne({ buildingId: buildingId.toString(), userId: userId.toString() });
-  if (!r) {
-    return null;
-  }
-  return toPlain(r);
+  const r = await c.findOne({ buildingId, userId });
+  return r ? toPlain(r) : null;
 }
 
-export async function addReview(buildingId, userId, displayName, rating, text) {
-  if (!ObjectId.isValid(buildingId)) {
-    throw new Error('Invalid building id.');
-  }
-  rating = parseInt(rating);
-  if (isNaN(rating) || rating < 1 || rating > 5) {
-    throw new Error('Rating must be 1–5.');
-  }
-  if (!text || String(text).trim().length < 5) {
-    throw new Error('Review text must be at least 5 characters.');
-  }
-  if (!displayName || !String(displayName).trim()) {
-    throw new Error('Display name is required.');
-  }
+export async function addReview(buildingId, user, rating, text) {
+  await getBuildingById(buildingId);
+  const r = parseInt(String(rating), 10);
+  if (!Number.isFinite(r) || r < 1 || r > 5) throw new Error('Rating must be between 1 and 5.');
+  const body = String(text || '').trim();
+  if (body.length < 5) throw new Error('Review must be at least 5 characters.');
 
   const c = await col();
-  const existing = await c.findOne({ buildingId: buildingId.toString(), userId: userId.toString() });
-  if (existing) {
-    throw new Error('You have already reviewed this building.');
-  }
+  const existing = await c.findOne({ buildingId, userId: user._id });
+  if (existing) throw new Error('You already reviewed this building. Edit or delete your existing review.');
 
-  const doc = {
-    buildingId: buildingId.toString(),
-    userId: userId.toString(),
-    displayName: String(displayName).trim(),
-    rating,
-    text: String(text).trim(),
-    createdAt: new Date(),
-    updatedAt: new Date()
-  };
-  const res = await c.insertOne(doc);
-  return { ...doc, _id: res.insertedId.toString() };
+  const displayName = `${user.firstName} ${String(user.lastName).charAt(0)}.`;
+  const now = new Date();
+  await c.insertOne({
+    buildingId,
+    userId: user._id,
+    displayName,
+    rating: r,
+    text: body,
+    createdAt: now,
+    updatedAt: now
+  });
+
+  const reviews = await getReviewsForBuilding(buildingId);
+  await recomputeTrustScore(buildingId, reviews);
+  return getUserReviewForBuilding(buildingId, user._id);
 }
 
-export async function updateReview(reviewId, userId, rating, text) {
-  if (!ObjectId.isValid(reviewId)) {
-    throw new Error('Invalid review id.');
-  }
-  rating = parseInt(rating);
-  if (isNaN(rating) || rating < 1 || rating > 5) {
-    throw new Error('Rating must be 1–5.');
-  }
-  if (!text || String(text).trim().length < 5) {
-    throw new Error('Review text must be at least 5 characters.');
-  }
+export async function updateReview(reviewId, userId, isAdmin, rating, text) {
+  const r = parseInt(String(rating), 10);
+  if (!Number.isFinite(r) || r < 1 || r > 5) throw new Error('Rating must be between 1 and 5.');
+  const body = String(text || '').trim();
+  if (body.length < 5) throw new Error('Review must be at least 5 characters.');
+  if (!ObjectId.isValid(reviewId)) throw new Error('Invalid review id.');
+
   const c = await col();
-  const rev = await c.findOne({ _id: new ObjectId(reviewId) });
-  if (!rev) {
-    throw new Error('Review not found.');
-  }
-  if (rev.userId !== userId.toString()) {
-    throw new Error('Not authorized.');
-  }
-  await c.updateOne({ _id: new ObjectId(reviewId) }, { $set: { rating, text: String(text).trim(), updatedAt: new Date() } });
-  return toPlain({ ...rev, rating, text: String(text).trim() });
+  const doc = await c.findOne({ _id: new ObjectId(reviewId) });
+  if (!doc) throw new Error('Review not found.');
+  if (!isAdmin && doc.userId !== userId) throw new Error('You can only edit your own review.');
+
+  const buildingId = doc.buildingId;
+  await c.updateOne(
+    { _id: doc._id },
+    { $set: { rating: r, text: body, updatedAt: new Date() } }
+  );
+
+  const reviews = await getReviewsForBuilding(buildingId);
+  await recomputeTrustScore(buildingId, reviews);
+  return toPlain(await c.findOne({ _id: doc._id }));
 }
 
-export async function deleteReview(reviewId, userId, isAdmin = false) {
-  if (!ObjectId.isValid(reviewId)) {
-    throw new Error('Invalid review id.');
-  }
+export async function deleteReview(reviewId, userId, isAdmin) {
+  if (!ObjectId.isValid(reviewId)) throw new Error('Invalid review id.');
   const c = await col();
-  const rev = await c.findOne({ _id: new ObjectId(reviewId) });
-  if (!rev) {
-    throw new Error('Review not found.');
-  }
-  if (!isAdmin && rev.userId !== userId.toString()) {
-    throw new Error('Not authorized.');
-  }
-  await c.deleteOne({ _id: new ObjectId(reviewId) });
-  return rev.buildingId;
-}
+  const doc = await c.findOne({ _id: new ObjectId(reviewId) });
+  if (!doc) throw new Error('Review not found.');
+  if (!isAdmin && doc.userId !== userId) throw new Error('You can only delete your own review.');
 
-function toPlain(r) { return { ...r, _id: r._id.toString() }; }
+  const buildingId = doc.buildingId;
+  await c.deleteOne({ _id: doc._id });
+  const reviews = await getReviewsForBuilding(buildingId);
+  await recomputeTrustScore(buildingId, reviews);
+}

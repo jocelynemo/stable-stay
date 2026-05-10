@@ -15,7 +15,8 @@ var filters = {
 };
 
 function loadFavorites() {
-  favorites = window.USER_FAVORITES || [];
+  var stored = localStorage.getItem("favorites");
+  if (stored !== null) favorites = JSON.parse(stored);
 }
 
 function isFavorited(id) {
@@ -26,31 +27,23 @@ function isFavorited(id) {
 }
 
 function toggleFavorite(id, btn) {
-  if (!window.SESSION_LOGGED_IN) {
-    authOpenModal('signin');
-    return;
+  var idx = -1;
+  for (var i = 0; i < favorites.length; i++) {
+    if (favorites[i] === id) { idx = i; break; }
   }
-  fetch('/favorites/toggle', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ buildingId: id })
-  }).then(function(r) { return r.json(); }).then(function(data) {
-    if (data.success) {
-      if (data.favorited) {
-        if (favorites.indexOf(id) === -1) favorites.push(id);
-        btn.classList.add("active");
-        btn.textContent = "♥";
-        showToast("Saved to favorites ♥");
-      } else {
-        var idx = favorites.indexOf(id);
-        if (idx !== -1) favorites.splice(idx, 1);
-        btn.classList.remove("active");
-        btn.textContent = "♡";
-        showToast("Removed from favorites");
-      }
-      if (activeTab === "favorites") applyAndRender();
-    }
-  }).catch(function() { showToast("Could not update favorites."); });
+  if (idx !== -1) {
+    favorites.splice(idx, 1);
+    btn.classList.remove("active");
+    btn.textContent = "♡";
+    showToast("Removed from favorites");
+  } else {
+    favorites.push(id);
+    btn.classList.add("active");
+    btn.textContent = "♥";
+    showToast("Saved to favorites ♥");
+  }
+  localStorage.setItem("favorites", JSON.stringify(favorites));
+  if (activeTab === "favorites") applyAndRender();
 }
 
 function getFilteredListings() {
@@ -60,7 +53,7 @@ function getFilteredListings() {
   for (var i = 0; i < all.length; i++) {
     var listing = all[i];
 
-    if (activeTab === "favorites" && !isFavorited(listing._id || listing.id)) continue;
+    if (activeTab === "favorites" && !isFavorited(listing.id)) continue;
 
     if (filters.city !== "") {
       if (listing.city.toLowerCase().indexOf(filters.city.toLowerCase()) === -1) continue;
@@ -118,14 +111,13 @@ function buildCard(listing) {
     imgWrap.appendChild(badge);
   }
 
-  var listingId = listing._id || String(listing.id);
   var favBtn = document.createElement("button");
-  favBtn.className = "fav-btn" + (isFavorited(listingId) ? " active" : "");
-  favBtn.textContent = isFavorited(listingId) ? "♥" : "♡";
+  favBtn.className = "fav-btn" + (isFavorited(listing.id) ? " active" : "");
+  favBtn.textContent = isFavorited(listing.id) ? "♥" : "♡";
   favBtn.title = "Save to favorites";
   favBtn.addEventListener("click", function(e) {
     e.stopPropagation();
-    toggleFavorite(listingId, favBtn);
+    toggleFavorite(listing.id, favBtn);
   });
   imgWrap.appendChild(favBtn);
   card.appendChild(imgWrap);
@@ -159,7 +151,7 @@ function buildCard(listing) {
   card.appendChild(info);
 
   card.addEventListener("click", function() {
-    window.location.href = "/buildings/" + (listing._id || listing.id);
+    window.location.href = "/buildings/building?id=" + listing.id;
   });
 
   return card;
@@ -235,6 +227,7 @@ function checkSearchParam() {
     filters.city = search;
   }
 
+  // survey params
   var maxPrice = params.get("maxPrice");
   if (maxPrice) {
     filters.maxPrice = maxPrice;
@@ -286,7 +279,7 @@ function updateMapPins(listings) {
       '<strong>' + b.name + '</strong><br>' +
       '<span style="color:#888;font-size:0.82rem;">' + b.city + ', NJ</span><br>' +
       '<span style="color:#f0a03c;font-weight:700;font-size:1rem;">$' + b.price.toLocaleString() + '/mo</span><br>' +
-      '<a href="/buildings/' + (b._id || b.id) + '" style="color:#f0a03c;font-size:0.82rem;">View Details →</a>' +
+      '<a href="/buildings/building?id=' + b.id + '" style="color:#f0a03c;font-size:0.82rem;">View Details →</a>' +
       '</div>'
     );
 
@@ -329,6 +322,7 @@ function init() {
   checkSearchParam();
   applyAndRender();
 
+  // tab buttons
   var tabBtns = document.querySelectorAll(".tab-btn");
   for (var i = 0; i < tabBtns.length; i++) {
     tabBtns[i].addEventListener("click", function() {
@@ -339,6 +333,7 @@ function init() {
     });
   }
 
+  // bed buttons
   var bedBtns = document.querySelectorAll(".bed-btn");
   for (var i = 0; i < bedBtns.length; i++) {
     bedBtns[i].addEventListener("click", function() {
@@ -360,6 +355,7 @@ function init() {
   var resetBtn = document.getElementById("resetFilters");
   if (resetBtn) resetBtn.addEventListener("click", resetFilters);
 
+  // sort
   var sortSelect = document.getElementById("sortSelect");
   if (sortSelect) {
     sortSelect.addEventListener("change", function() {
@@ -376,6 +372,7 @@ function init() {
     });
   }
 
+  // view toggle
   var viewGridBtn = document.getElementById("viewGrid");
   var viewMapBtn  = document.getElementById("viewMap");
   if (viewGridBtn) viewGridBtn.addEventListener("click", switchToGridView);

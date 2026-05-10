@@ -1,0 +1,103 @@
+<nav class="navbar">
+  <a class="nav-logo" href="/">Stable<span>Stay</span></a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/buildings" class="active">Browse Rentals</a></li>
+    <li><a href="/#about">About</a></li>
+    <li><a href="/#contact">Contact</a></li>
+    {{#if sessionUser}}<li><a href="/profile">My Profile</a></li>{{/if}}
+  </ul>
+  <div class="nav-actions">
+    {{#if sessionUser}}
+      <span style="font-size:0.88rem;color:var(--text-muted);font-weight:500;padding:0 4px;">Hi, {{sessionUser.firstName}}</span>
+      {{#if sessionUser.isAdmin}}<a href="/admin" class="btn btn-ghost">Admin</a>{{/if}}
+      <a href="/profile" class="btn btn-ghost">My Profile</a>
+      <a href="/logout" class="btn btn-primary">Sign Out</a>
+    {{else}}
+      <a href="/login" class="btn btn-ghost">Sign In</a>
+      <a href="/register" class="btn btn-primary">Get Started</a>
+    {{/if}}
+  </div>
+</nav>
+
+<div class="buildings-header">
+  <h1>Browse Rentals</h1>
+  <p>Filter by city, price, bedrooms, and amenities to find your perfect place.</p>
+</div>
+
+<div class="buildings-layout">
+  <aside class="filter-sidebar">
+    <div class="filter-group">
+      <div class="filter-section-title">Location</div>
+      <input class="filter-input" type="text" id="filterCity" placeholder="City (e.g. Jersey City)" />
+      <input class="filter-input" type="text" id="filterZip" placeholder="Zip code" />
+    </div>
+    <div class="filter-group">
+      <div class="filter-section-title">Price / Month</div>
+      <div class="price-range">
+        <input class="filter-input" type="number" id="filterMinPrice" placeholder="Min $" min="0" />
+        <span>—</span>
+        <input class="filter-input" type="number" id="filterMaxPrice" placeholder="Max $" min="0" />
+      </div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-section-title">Bedrooms</div>
+      <div class="beds-grid">
+        <button class="bed-btn" data-beds="1">1</button>
+        <button class="bed-btn" data-beds="2">2</button>
+        <button class="bed-btn" data-beds="3">3</button>
+        <button class="bed-btn" data-beds="4">4+</button>
+      </div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-section-title">Amenities</div>
+      <div class="amenity-list">
+        <label class="amenity-checkbox"><input type="checkbox" class="amenity-check" value="Gym" /> Gym</label>
+        <label class="amenity-checkbox"><input type="checkbox" class="amenity-check" value="Parking" /> Parking</label>
+        <label class="amenity-checkbox"><input type="checkbox" class="amenity-check" value="Laundry" /> Laundry</label>
+        <label class="amenity-checkbox"><input type="checkbox" class="amenity-check" value="Doorman" /> Doorman</label>
+        <label class="amenity-checkbox"><input type="checkbox" class="amenity-check" value="Rooftop" /> Rooftop</label>
+        <label class="amenity-checkbox"><input type="checkbox" class="amenity-check" value="Pet Friendly" /> Pet Friendly</label>
+      </div>
+    </div>
+    <div class="filter-apply">
+      <button class="btn btn-primary full-width" id="applyFilters">Apply Filters</button>
+      <button class="btn btn-ghost full-width" id="resetFilters" style="margin-top:10px;">Reset</button>
+    </div>
+  </aside>
+
+  <main class="buildings-main">
+    <div class="buildings-toolbar">
+      <div class="buildings-count" id="listingsCount"><strong id="countNum">0</strong> rentals found</div>
+      <select class="sort-select" id="sortSelect">
+        <option value="default">Sort: Default</option>
+        <option value="price-asc">Price: Low to High</option>
+        <option value="price-desc">Price: High to Low</option>
+        <option value="sqft-desc">Largest First</option>
+        <option value="trust-desc">Highest Trust Score</option>
+      </select>
+    </div>
+    <div class="tabs-bar">
+      <div style="display:flex;gap:8px;">
+        <button class="tab-btn active" data-tab="all">All Listings</button>
+        <button class="tab-btn" data-tab="favorites">Saved ♥</button>
+      </div>
+      <div class="view-toggle">
+        <button class="view-btn active" id="viewGrid" title="Grid view">⊞</button>
+        <button class="view-btn" id="viewMap" title="Map view">🗺</button>
+      </div>
+    </div>
+    <div class="listings-grid" id="listingsGrid"></div>
+    <div id="mapView" style="display:none;">
+      <div id="buildingsMap"></div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/data.js"></script>
+<script>
+  window.BUILDINGS_BASE = {{{buildingsJson}}};
+  window.SESSION_LOGGED_IN = {{#if sessionUser}}true{{else}}false{{/if}};
+  window.USER_FAVORITES = {{{favoritesJson}}};
+</script>
+<script src="/js/buildings.js"></script>

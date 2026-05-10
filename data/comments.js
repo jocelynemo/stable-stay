@@ -1,60 +1,44 @@
 import { dbConnection } from '../config/mongoConnection.js';
 import { ObjectId } from 'mongodb';
+import { getBuildingById } from './buildings.js';
 
-async function col() { return (await dbConnection()).collection('comments'); }
+async function col() {
+  return (await dbConnection()).collection('comments');
+}
+
+function toPlain(doc) {
+  if (!doc) return null;
+  return { ...doc, _id: doc._id.toString() };
+}
 
 export async function getCommentsForBuilding(buildingId) {
-  if (!ObjectId.isValid(buildingId)) {
-    throw new Error('Invalid building id.');
-  }
   const c = await col();
-  return (await c.find({ buildingId: buildingId.toString() }).sort({ createdAt: 1 }).toArray()).map(toPlain);
+  const rows = await c.find({ buildingId }).sort({ createdAt: -1 }).toArray();
+  return rows.map(toPlain);
 }
 
-export async function addComment(buildingId, userId, displayName, text) {
-  if (!ObjectId.isValid(buildingId)) {
-    throw new Error('Invalid building id.');
-  }
-  if (!text || String(text).trim().length < 1) {
-    throw new Error('Comment cannot be empty.');
-  }
-  if (String(text).trim().length > 1000) {
-    throw new Error('Comment is too long (max 1000 chars).');
-  }
-  if (!displayName || !String(displayName).trim()) {
-    throw new Error('Display name is required.');
-  }
+export async function addComment(buildingId, user, text) {
+  await getBuildingById(buildingId);
+  const body = String(text || '').trim();
+  if (!body.length) throw new Error('Comment cannot be empty.');
 
+  const displayName = `${user.firstName} ${String(user.lastName).charAt(0)}.`;
   const c = await col();
-  const doc = {
-    buildingId: buildingId.toString(),
-    userId: userId.toString(),
-    displayName: String(displayName).trim(),
-    text: String(text).trim(),
+  const res = await c.insertOne({
+    buildingId,
+    userId: user._id,
+    displayName,
+    text: body,
     createdAt: new Date()
-  };
-  const res = await c.insertOne(doc);
-  return { ...doc, _id: res.insertedId.toString() };
+  });
+  return toPlain(await c.findOne({ _id: res.insertedId }));
 }
 
-export async function deleteComment(commentId, userId, isAdmin = false) {
-  if (!ObjectId.isValid(commentId)) {
-    throw new Error('Invalid comment id.');
-  }
+export async function deleteComment(commentId, userId, isAdmin) {
+  if (!ObjectId.isValid(commentId)) throw new Error('Invalid comment id.');
   const c = await col();
-  const comment = await c.findOne({ _id: new ObjectId(commentId) });
-  if (!comment) {
-    throw new Error('Comment not found.');
-  }
-  if (!isAdmin && comment.userId !== userId.toString()) {
-    throw new Error('Not authorized.');
-  }
-  await c.deleteOne({ _id: new ObjectId(commentId) });
+  const doc = await c.findOne({ _id: new ObjectId(commentId) });
+  if (!doc) throw new Error('Comment not found.');
+  if (!isAdmin && doc.userId !== userId) throw new Error('You can only delete your own comments.');
+  await c.deleteOne({ _id: doc._id });
 }
-
-export async function getAllComments() {
-  const c = await col();
-  return (await c.find({}).sort({ createdAt: -1 }).toArray()).map(toPlain);
-}
-
-function toPlain(c) { return { ...c, _id: c._id.toString() }; }
