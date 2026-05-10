@@ -14,10 +14,18 @@ export async function createUser(firstName, lastName, email, password, phone, ci
   email     = String(email     || '').trim().toLowerCase();
   password  = String(password  || '');
 
-  if (firstName.length < 2) throw new Error('First name must be at least 2 characters.');
-  if (lastName.length  < 2) throw new Error('Last name must be at least 2 characters.');
-  if (!email.includes('@'))  throw new Error('Invalid email address.');
-  if (password.length  < 6) throw new Error('Password must be at least 6 characters.');
+  if (firstName.length < 2) {
+    throw new Error('First name must be at least 2 characters.');
+  }
+  if (lastName.length < 2) {
+    throw new Error('Last name must be at least 2 characters.');
+  }
+  if (!email.includes('@')) {
+    throw new Error('Invalid email address.');
+  }
+  if (password.length < 6) {
+    throw new Error('Password must be at least 6 characters.');
+  }
 
   const c = await col();
   const existing = await c.findOne({ email });
@@ -81,7 +89,7 @@ export async function updateUser(id, fields) {
     throw new Error('Invalid user id.');
   }
 
-  const allowed = ['firstName', 'lastName', 'phone', 'city', 'state', 'zip'];
+  const allowed = ['firstName', 'lastName', 'email', 'phone', 'city', 'state', 'zip'];
   const set = {};
   for (let i = 0; i < allowed.length; i++) {
     const key = allowed[i];
@@ -96,11 +104,23 @@ export async function updateUser(id, fields) {
   if (set.lastName !== undefined && set.lastName.length < 2) {
     throw new Error('Last name must be at least 2 characters.');
   }
+  if (set.email !== undefined) {
+    set.email = set.email.toLowerCase();
+    if (!set.email.includes('@')) {
+      throw new Error('Invalid email address.');
+    }
+  }
   if (!Object.keys(set).length) {
     throw new Error('Nothing to update.');
   }
 
   const c = await col();
+  if (set.email) {
+    const existing = await c.findOne({ email: set.email, _id: { $ne: new ObjectId(id) } });
+    if (existing) {
+      throw new Error('An account with that email already exists.');
+    }
+  }
   await c.updateOne({ _id: new ObjectId(id) }, { $set: set });
   return getUserById(id);
 }
