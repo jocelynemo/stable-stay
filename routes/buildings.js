@@ -13,16 +13,27 @@ router.get('/', async (req, res) => {
     const buildings = await getAllBuildings();
     const user = req.session.user || null;
     const userFavorites = user ? await getFavoritesForUser(user._id) : [];
+
+    const favoriteIds = [];
+    for (let i = 0; i < userFavorites.length; i++) {
+      const b = userFavorites[i];
+      favoriteIds.push(b._id ? b._id.toString() : String(b.id));
+    }
+
     res.render('pages/buildings', {
-      title: 'Browse Rentals — StableStay',
+      title: 'Browse Rentals - StableStay',
       layout: 'main',
       user,
       buildingsJson: JSON.stringify(buildings),
-      favoritesJson: JSON.stringify(userFavorites),
+      favoritesJson: JSON.stringify(favoriteIds),
       leaflet: true
     });
   } catch (e) {
-    res.status(500).render('pages/error', { title: 'Error', message: e.message, layout: 'main' });
+    res.status(500).render('pages/error', {
+      title: 'Error',
+      message: e.message,
+      layout: 'main'
+    });
   }
 });
 
@@ -37,24 +48,32 @@ router.get('/:id', async (req, res) => {
     const user = req.session.user || null;
     let userReview = null;
     let favorited = false;
+
     if (user) {
       userReview = await getUserReviewForBuilding(req.params.id, user._id);
       favorited = await isFavorited(user._id, req.params.id);
     }
 
-    const formatDate = d => d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+    const formatDate = d =>
+      d ? new Date(d).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      }) : '';
 
     const reviewsForTemplate = reviews.map(r => ({
       ...r,
-      stars: '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating),
+      stars: '\u2605'.repeat(r.rating) + '\u2606'.repeat(5 - r.rating),
       dateFormatted: formatDate(r.createdAt),
       isOwner: user && r.userId === user._id
     }));
+
     const commentsForTemplate = comments.map(c => ({
       ...c,
       dateFormatted: formatDate(c.createdAt),
       isOwner: user && c.userId === user._id
     }));
+
     const issuesForTemplate = issues.map(i => ({
       ...i,
       dateFormatted: formatDate(i.createdAt),
@@ -62,8 +81,9 @@ router.get('/:id', async (req, res) => {
     }));
 
     res.render('pages/building', {
-      title: `${building.name} — StableStay`,
+      title: `${building.name} - StableStay`,
       layout: 'main',
+      leaflet: true,
       building,
       reviews: reviewsForTemplate,
       comments: commentsForTemplate,
@@ -72,10 +92,19 @@ router.get('/:id', async (req, res) => {
       userReview,
       favorited,
       hasViolations: building.violations && building.violations.length > 0,
-      buildingJson: JSON.stringify(building)
+      buildingJson: JSON.stringify(building),
+      reviewsJson: JSON.stringify(reviewsForTemplate),
+      commentsJson: JSON.stringify(commentsForTemplate),
+      issuesJson: JSON.stringify(issuesForTemplate),
+      userReviewJson: JSON.stringify(userReview),
+      sessionUserJson: JSON.stringify(user)
     });
   } catch (e) {
-    res.status(404).render('pages/error', { title: 'Not Found', message: e.message, layout: 'main' });
+    res.status(404).render('pages/error', {
+      title: 'Not Found',
+      message: e.message,
+      layout: 'main'
+    });
   }
 });
 
