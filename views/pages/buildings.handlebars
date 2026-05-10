@@ -5,17 +5,17 @@
     <li><a href="/buildings" class="active">Browse Rentals</a></li>
     <li><a href="/#about">About</a></li>
     <li><a href="/#contact">Contact</a></li>
-    {{#if sessionUser}}<li><a href="/profile">My Profile</a></li>{{/if}}
+    {{#if user}}<li><a href="/profile">My Profile</a></li>{{/if}}
   </ul>
   <div class="nav-actions">
-    {{#if sessionUser}}
-      <span style="font-size:0.88rem;color:var(--text-muted);font-weight:500;padding:0 4px;">Hi, {{sessionUser.firstName}}</span>
-      {{#if sessionUser.isAdmin}}<a href="/admin" class="btn btn-ghost">Admin</a>{{/if}}
+    {{#if user}}
+      <span style="font-size:0.88rem;color:var(--text-muted);font-weight:500;padding:0 4px;">Hi, {{user.firstName}}</span>
+      {{#if user.isAdmin}}<a href="/admin" class="btn btn-ghost">Admin</a>{{/if}}
       <a href="/profile" class="btn btn-ghost">My Profile</a>
-      <a href="/logout" class="btn btn-primary">Sign Out</a>
+      <a href="/signout" class="btn btn-primary">Sign Out</a>
     {{else}}
-      <a href="/login" class="btn btn-ghost">Sign In</a>
-      <a href="/register" class="btn btn-primary">Get Started</a>
+      <button class="btn btn-ghost" id="signInBtn">Sign In</button>
+      <button class="btn btn-primary" id="registerBtn">Get Started</button>
     {{/if}}
   </div>
 </nav>
@@ -29,15 +29,23 @@
   <aside class="filter-sidebar">
     <div class="filter-group">
       <div class="filter-section-title">Location</div>
-      <input class="filter-input" type="text" id="filterCity" placeholder="City (e.g. Jersey City)" />
-      <input class="filter-input" type="text" id="filterZip" placeholder="Zip code" />
+      <label class="filter-label">City</label>
+      <input class="filter-input" type="text" id="filterCity" />
+      <label class="filter-label">Zip Code</label>
+      <input class="filter-input" type="text" id="filterZip" />
     </div>
     <div class="filter-group">
       <div class="filter-section-title">Price / Month</div>
       <div class="price-range">
-        <input class="filter-input" type="number" id="filterMinPrice" placeholder="Min $" min="0" />
-        <span>—</span>
-        <input class="filter-input" type="number" id="filterMaxPrice" placeholder="Max $" min="0" />
+        <div class="price-range-field">
+          <label class="filter-label">Min</label>
+          <input class="filter-input" type="number" id="filterMinPrice" min="0" autocomplete="off" />
+        </div>
+        <span class="price-range-sep">&ndash;</span>
+        <div class="price-range-field">
+          <label class="filter-label">Max</label>
+          <input class="filter-input" type="number" id="filterMaxPrice" min="0" autocomplete="off" />
+        </div>
       </div>
     </div>
     <div class="filter-group">
@@ -80,24 +88,27 @@
     <div class="tabs-bar">
       <div style="display:flex;gap:8px;">
         <button class="tab-btn active" data-tab="all">All Listings</button>
-        <button class="tab-btn" data-tab="favorites">Saved ♥</button>
+        <button class="tab-btn" data-tab="favorites">Saved &#9829;</button>
       </div>
       <div class="view-toggle">
-        <button class="view-btn active" id="viewGrid" title="Grid view">⊞</button>
-        <button class="view-btn" id="viewMap" title="Map view">🗺</button>
+        <button class="view-btn active" id="viewGrid" title="Grid view">&#8862;</button>
+        <button class="view-btn" id="viewMap" title="Map view">&#128506;</button>
       </div>
     </div>
     <div class="listings-grid" id="listingsGrid"></div>
+    <div class="pagination" id="pagination"></div>
     <div id="mapView" style="display:none;">
       <div id="buildingsMap"></div>
     </div>
   </main>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="/js/data.js"></script>
 <script>
   window.BUILDINGS_BASE = {{{buildingsJson}}};
-  window.SESSION_LOGGED_IN = {{#if sessionUser}}true{{else}}false{{/if}};
+  window.SESSION_LOGGED_IN = {{#if user}}true{{else}}false{{/if}};
   window.USER_FAVORITES = {{{favoritesJson}}};
 </script>
+<script src="/js/auth.js"></script>
 <script src="/js/buildings.js"></script>
