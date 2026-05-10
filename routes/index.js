@@ -9,7 +9,7 @@ import survey from './survey.js';
 
 const constructorMethod = (app) => {
   app.get('/', async (req, res) => {
-    return res.render('pages/landing', {title: 'StableStay'});
+    return res.render('pages/landing', {title: 'StableStay', layout: 'main', user: req.session.user || null});
   });
 
   app.use('/', auth);
@@ -22,7 +22,10 @@ const constructorMethod = (app) => {
   app.use('/survey', survey);
 
   app.use(async (req, res) => {
-    return res.status(404).render('pages/error', {title: 'Not Found — StableStay'});
+    return res.status(404).render('pages/error', {
+      title:   'Not Found — StableStay',
+      layout:  'main'
+    });
   });
 };
 
