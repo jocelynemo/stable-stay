@@ -10,22 +10,25 @@ function requireAuth(req, res, next) {
   next();
 }
 
-// POST /comments/:buildingId
+// POST /comments/:buildingId - post a comment
 router.post('/:buildingId', requireAuth, async (req, res) => {
   try {
-    const { text } = req.body || {};
-    const comment = await addComment(req.params.buildingId, req.session.user, text);
+    const user = req.session.user;
+    const displayName = user.firstName + ' ' + user.lastName;
+    const { text } = req.body;
+
+    const comment = await addComment(req.params.buildingId, user._id, displayName, text);
     res.json({ success: true, comment });
   } catch (e) {
     res.status(400).json({ success: false, error: e.message });
   }
 });
 
-// DELETE /comments/:commentId
+// DELETE /comments/:commentId - delete own comment or admin
 router.delete('/:commentId', requireAuth, async (req, res) => {
   try {
-    const u = req.session.user;
-    await deleteComment(req.params.commentId, u._id, !!u.isAdmin);
+    const user = req.session.user;
+    await deleteComment(req.params.commentId, user._id, user.isAdmin);
     res.json({ success: true });
   } catch (e) {
     res.status(400).json({ success: false, error: e.message });
