@@ -8,11 +8,62 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/css/style.css?v=3" />
-  {{#if leafletCss}}
+  {{#if leaflet}}
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   {{/if}}
 </head>
 <body>
   {{{body}}}
+
+  <!-- Auth modal -->
+  <div class="modal-overlay" id="authModal">
+    <div class="modal">
+      <button class="modal-close" id="authModalClose">✕</button>
+      <h2 class="modal-title">Welcome Back</h2>
+      <p class="modal-sub">Sign in to access your saved listings and profile.</p>
+      <div class="modal-tabs">
+        <button class="modal-tab active" data-mode="signin">Sign In</button>
+        <button class="modal-tab" data-mode="register">Register</button>
+      </div>
+
+      <!-- Sign in fields -->
+      <div class="modal-form" id="authSignInFields" style="display:flex;flex-direction:column;gap:14px;">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="authSiEmail" />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="authSiPassword" />
+        </div>
+        <div id="authSiError" style="color:var(--danger);font-size:0.85rem;display:none;margin-top:-4px;"></div>
+        <button class="btn btn-primary full-width mt-8" id="authSiSubmit">Sign In</button>
+      </div>
+
+      <!-- Register fields -->
+      <div class="modal-form" id="authRegFields" style="display:none;flex-direction:column;gap:14px;">
+        <div class="form-group">
+          <label>First Name</label>
+          <input type="text" id="authRegFirst" />
+        </div>
+        <div class="form-group">
+          <label>Last Name</label>
+          <input type="text" id="authRegLast" />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="authRegEmail" />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="authRegPassword" />
+        </div>
+        <div id="authRegError" style="color:var(--danger);font-size:0.85rem;display:none;margin-top:-4px;"></div>
+        <button class="btn btn-primary full-width mt-8" id="authRegSubmit">Create Account</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
 </body>
 </html>

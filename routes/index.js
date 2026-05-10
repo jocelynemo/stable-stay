@@ -29,8 +29,8 @@ const constructorMethod = (app) => {
 
   app.use(async (req, res) => {
     return res.status(404).render('pages/error', {
-      title: 'Not Found - StableStay',
-      layout: 'main'
+      title:   'Not Found — StableStay',
+      layout:  'main'
     });
   });
 };
