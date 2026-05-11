@@ -1,0 +1,57 @@
+<nav class="navbar">
+  <a class="nav-logo" href="/">Stable<span>Stay</span></a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/buildings">Browse Rentals</a></li>
+    <li><a href="/#about">About</a></li>
+    <li><a href="/#contact">Contact</a></li>
+  </ul>
+  <div class="nav-actions">
+    <a href="/login" class="btn btn-ghost">Sign In</a>
+  </div>
+</nav>
+
+<div style="min-height:calc(100vh - 68px);display:flex;align-items:center;justify-content:center;padding:40px 24px;">
+  <div class="modal" style="position:static;animation:none;max-width:440px;width:100%;">
+
+    <div class="modal-title">Create an account</div>
+    <p class="modal-sub">Join StableStay to save listings and leave reviews.</p>
+
+    {{#if error}}
+      <div style="background:rgba(248,113,113,0.1);border:1px solid var(--danger);color:var(--danger);padding:10px 14px;border-radius:var(--radius-sm);font-size:0.88rem;margin-bottom:16px;">
+        {{error}}
+      </div>
+    {{/if}}
+
+    <form class="modal-form" action="/register" method="POST">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group">
+          <label>First Name</label>
+          <input type="text" name="firstName" required />
+        </div>
+        <div class="form-group">
+          <label>Last Name</label>
+          <input type="text" name="lastName" required />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" name="email" required />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" name="password" required />
+      </div>
+      <button type="submit" class="btn btn-primary full-width" style="margin-top:8px;">Create Account</button>
+    </form>
+
+    <div class="divider" style="margin-top:20px;">or</div>
+
+    <p style="text-align:center;font-size:0.87rem;color:var(--text-muted);margin-top:16px;">
+      Already have an account? <a href="/login" style="color:var(--accent);font-weight:600;">Sign In</a>
+    </p>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
