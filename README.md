@@ -1,6 +1,17 @@
 # StableStay
 A full-stack web application that helps users discover, filter, and analyze NYC housing listings using open city datasets, including rent-stabilized building data and housing violations.
 
+## Getting Started
+
+1. Install dependencies:
+   ```
+   npm install
+   ```
+2. Start the application:
+   ```
+   npm run
+   ```
+
 ## Team Members
 
 - Jocelyn Mo
