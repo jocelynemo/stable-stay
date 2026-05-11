@@ -1,14 +1,12 @@
-//buildings.js: buildings/listings page logic
-
-var activeTab      = "all";
-var favorites      = [];
-var leafletMap     = null;
-var mapMarkers     = [];
-var miniMaps       = [];
+var activeTab       = "all";
+var favorites       = [];
+var leafletMap      = null;
+var mapMarkers      = [];
+var miniMaps        = [];
 var pendingMiniMaps = [];
-var currentPage    = 1;
-var PAGE_SIZE      = 20;
-var currentSort    = "default";
+var currentPage     = 1;
+var PAGE_SIZE       = 20;
+var currentSort     = "default";
 
 var filters = {
   city: "",
@@ -37,33 +35,39 @@ function toggleFavorite(id, btn) {
     authOpenModal('signin');
     return;
   }
+
   fetch('/favorites/toggle', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ buildingId: id })
-  }).then(function(r) { return r.json(); }).then(function(data) {
-    if (data.success) {
-      if (data.favorited) {
-        if (favorites.indexOf(id) === -1) {
-          favorites.push(id);
+  })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (data.success) {
+        if (data.favorited) {
+          if (favorites.indexOf(id) === -1) {
+            favorites.push(id);
+          }
+          btn.classList.add("active");
+          btn.textContent = "♥";
+          showToast("Saved to favorites ♥");
+        } else {
+          var idx = favorites.indexOf(id);
+          if (idx !== -1) {
+            favorites.splice(idx, 1);
+          }
+          btn.classList.remove("active");
+          btn.textContent = "♡";
+          showToast("Removed from favorites");
         }
-        btn.classList.add("active");
-        btn.textContent = "♥";
-        showToast("Saved to favorites ♥");
-      } else {
-        var idx = favorites.indexOf(id);
-        if (idx !== -1) {
-          favorites.splice(idx, 1);
+        if (activeTab === "favorites") {
+          applyAndRender();
         }
-        btn.classList.remove("active");
-        btn.textContent = "♡";
-        showToast("Removed from favorites");
       }
-      if (activeTab === "favorites") {
-        applyAndRender();
-      }
-    }
-  }).catch(function() { showToast("Could not update favorites."); });
+    })
+    .catch(function () {
+      showToast("Could not update favorites.");
+    });
 }
 
 function getFilteredListings() {
@@ -78,25 +82,34 @@ function getFilteredListings() {
     }
 
     if (filters.city !== "") {
-      if (listing.city.toLowerCase().indexOf(filters.city.toLowerCase()) === -1) {
+      var q = filters.city.toLowerCase();
+      if (
+        listing.city.toLowerCase().indexOf(q) === -1 &&
+        listing.zip.indexOf(q) === -1 &&
+        listing.name.toLowerCase().indexOf(q) === -1
+      ) {
         continue;
       }
     }
+
     if (filters.zip !== "") {
       if (listing.zip.indexOf(filters.zip) === -1) {
         continue;
       }
     }
+
     if (filters.minPrice !== "") {
       if (listing.price < parseInt(filters.minPrice)) {
         continue;
       }
     }
+
     if (filters.maxPrice !== "") {
       if (listing.price > parseInt(filters.maxPrice)) {
         continue;
       }
     }
+
     if (filters.beds !== null) {
       if (filters.beds === 4) {
         if (listing.beds < 4) {
@@ -108,6 +121,7 @@ function getFilteredListings() {
         }
       }
     }
+
     if (filters.amenities.length > 0) {
       var hasAll = true;
       for (var j = 0; j < filters.amenities.length; j++) {
@@ -139,15 +153,15 @@ function buildCard(listing) {
 
   var card = document.createElement("div");
   card.className = "listing-card";
-  card.addEventListener("click", function() {
-    window.location.href = "/buildings/" + listingId;
+  card.addEventListener("click", function () {
+    window.location.href = `/buildings/${listingId}`;
   });
 
   var imgWrap = document.createElement("div");
   imgWrap.className = "listing-img";
 
   if (listing.lat && listing.lng) {
-    var mapId = "mini-map-" + listingId;
+    var mapId = `mini-map-${listingId}`;
     var mapDiv = document.createElement("div");
     mapDiv.className = "mini-map";
     mapDiv.id = mapId;
@@ -156,7 +170,7 @@ function buildCard(listing) {
   } else {
     var placeholder = document.createElement("div");
     placeholder.className = "img-placeholder";
-    placeholder.innerHTML = '<span class="icon">🏢</span><span>' + listing.name + '</span>';
+    placeholder.innerHTML = `<span class="icon">🏢</span><span>${listing.name}</span>`;
     imgWrap.appendChild(placeholder);
   }
 
@@ -168,10 +182,17 @@ function buildCard(listing) {
   }
 
   var favBtn = document.createElement("button");
-  favBtn.className = "fav-btn" + (isFavorited(listingId) ? " active" : "");
-  favBtn.textContent = isFavorited(listingId) ? "♥" : "♡";
   favBtn.title = "Save to favorites";
-  favBtn.addEventListener("click", function(e) {
+
+  if (isFavorited(listingId)) {
+    favBtn.className = "fav-btn active";
+    favBtn.textContent = "♥";
+  } else {
+    favBtn.className = "fav-btn";
+    favBtn.textContent = "♡";
+  }
+
+  favBtn.addEventListener("click", function (e) {
     e.stopPropagation();
     toggleFavorite(listingId, favBtn);
   });
@@ -183,7 +204,7 @@ function buildCard(listing) {
 
   var price = document.createElement("div");
   price.className = "listing-price";
-  price.innerHTML = "$" + listing.price.toLocaleString() + '<span>/mo</span>';
+  price.innerHTML = `$${listing.price.toLocaleString()}<span>/mo</span>`;
 
   var name = document.createElement("div");
   name.className = "listing-name";
@@ -191,14 +212,20 @@ function buildCard(listing) {
 
   var location = document.createElement("div");
   location.className = "listing-location";
-  location.textContent = "📍 " + listing.city + ", " + (listing.state || "NY") + " " + listing.zip;
+
+  var boroughSuffix = '';
+  if (listing.borough && listing.borough !== listing.city) {
+    boroughSuffix = ` (${listing.borough})`;
+  }
+  location.textContent = `📍 ${listing.city}${boroughSuffix}, ${listing.state || 'NY'} ${listing.zip}`;
 
   var meta = document.createElement("div");
   meta.className = "listing-meta";
-  meta.innerHTML =
-    '<div class="listing-meta-item">🛏 ' + listing.beds + ' bd</div>' +
-    '<div class="listing-meta-item">🚿 ' + listing.baths + ' ba</div>' +
-    '<div class="listing-meta-item">📐 ' + listing.sqft + ' sqft</div>';
+  meta.innerHTML = `
+    <div class="listing-meta-item">🛏 ${listing.beds} bd</div>
+    <div class="listing-meta-item">🚿 ${listing.baths} ba</div>
+    <div class="listing-meta-item">📐 ${listing.sqft} sqft</div>
+  `;
 
   info.appendChild(price);
   info.appendChild(name);
@@ -212,7 +239,7 @@ function buildCard(listing) {
 function initPendingMaps() {
   var queue = pendingMiniMaps.slice();
   pendingMiniMaps = [];
-  setTimeout(function() {
+  setTimeout(function () {
     for (var i = 0; i < queue.length; i++) {
       var item = queue[i];
       var el = document.getElementById(item.id);
@@ -220,15 +247,15 @@ function initPendingMaps() {
         continue;
       }
       var m = L.map(el, {
-        center:           [item.lat, item.lng],
-        zoom:             15,
-        zoomControl:      false,
-        scrollWheelZoom:  false,
-        dragging:         false,
-        touchZoom:        false,
-        doubleClickZoom:  false,
-        boxZoom:          false,
-        keyboard:         false,
+        center:             [item.lat, item.lng],
+        zoom:               15,
+        zoomControl:        false,
+        scrollWheelZoom:    false,
+        dragging:           false,
+        touchZoom:          false,
+        doubleClickZoom:    false,
+        boxZoom:            false,
+        keyboard:           false,
         attributionControl: false
       });
       L.tileLayer("https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png", {
@@ -257,7 +284,7 @@ function renderListings(listings, totalCount) {
   var total   = totalCount !== undefined ? totalCount : listings.length;
   var countEl = document.getElementById("listingsCount");
   if (countEl) {
-    countEl.innerHTML = "<strong>" + total + "</strong> rentals found";
+    countEl.innerHTML = `<strong>${total}</strong> rentals found`;
   }
 
   if (listings.length === 0) {
@@ -282,26 +309,29 @@ function applyAndRender() {
   var all = getFilteredListings();
 
   if (currentSort === "price-asc") {
-    all.sort(function(a, b) { return a.price - b.price; });
+    all.sort(function (a, b) { return a.price - b.price; });
   } else if (currentSort === "price-desc") {
-    all.sort(function(a, b) { return b.price - a.price; });
+    all.sort(function (a, b) { return b.price - a.price; });
   } else if (currentSort === "sqft-desc") {
-    all.sort(function(a, b) { return b.sqft - a.sqft; });
+    all.sort(function (a, b) { return b.sqft - a.sqft; });
   } else if (currentSort === "trust-desc") {
-    all.sort(function(a, b) { return (b.trustScore || 0) - (a.trustScore || 0); });
+    all.sort(function (a, b) { return (b.trustScore || 0) - (a.trustScore || 0); });
   }
 
   var totalPages = Math.ceil(all.length / PAGE_SIZE) || 1;
   if (currentPage > totalPages) {
     currentPage = totalPages;
   }
+
   var start = (currentPage - 1) * PAGE_SIZE;
   var page  = [];
   for (var i = start; i < start + PAGE_SIZE && i < all.length; i++) {
     page.push(all[i]);
   }
+
   renderListings(page, all.length);
   renderPagination(all.length);
+
   if (leafletMap) {
     updateMapPins(all);
   }
@@ -325,7 +355,7 @@ function renderPagination(totalCount) {
   if (currentPage === 1) {
     prevBtn.disabled = true;
   }
-  prevBtn.addEventListener('click', function() {
+  prevBtn.addEventListener('click', function () {
     if (currentPage > 1) {
       currentPage--;
       applyAndRender();
@@ -338,6 +368,7 @@ function renderPagination(totalCount) {
   var half = Math.floor(maxButtons / 2);
   var startPage = currentPage - half;
   var endPage   = currentPage + half;
+
   if (startPage < 1) {
     startPage = 1;
     endPage   = Math.min(maxButtons, totalPages);
@@ -354,8 +385,8 @@ function renderPagination(totalCount) {
     if (p === currentPage) {
       pageBtn.classList.add('active');
     }
-    (function(pageNum) {
-      pageBtn.addEventListener('click', function() {
+    (function (pageNum) {
+      pageBtn.addEventListener('click', function () {
         currentPage = pageNum;
         applyAndRender();
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -370,7 +401,7 @@ function renderPagination(totalCount) {
   if (currentPage === totalPages) {
     nextBtn.disabled = true;
   }
-  nextBtn.addEventListener('click', function() {
+  nextBtn.addEventListener('click', function () {
     if (currentPage < totalPages) {
       currentPage++;
       applyAndRender();
@@ -385,14 +416,17 @@ function readFilters() {
   if (cityEl) {
     filters.city = cityEl.value.trim();
   }
+
   var zipEl = document.getElementById("filterZip");
   if (zipEl) {
     filters.zip = zipEl.value.trim();
   }
+
   var minEl = document.getElementById("filterMinPrice");
   if (minEl) {
     filters.minPrice = minEl.value.trim();
   }
+
   var maxEl = document.getElementById("filterMaxPrice");
   if (maxEl) {
     filters.maxPrice = maxEl.value.trim();
@@ -415,10 +449,12 @@ function resetFilters() {
       el.value = "";
     }
   }
+
   var bedBtns = document.querySelectorAll(".bed-btn");
   for (var j = 0; j < bedBtns.length; j++) {
     bedBtns[j].classList.remove("active");
   }
+
   var boxes = document.querySelectorAll(".amenity-check");
   for (var k = 0; k < boxes.length; k++) {
     boxes[k].checked = false;
@@ -446,6 +482,7 @@ function checkSearchParam() {
       maxEl.value = maxPrice;
     }
   }
+
   var beds = params.get("beds");
   if (beds) {
     filters.beds = parseInt(beds);
@@ -458,7 +495,7 @@ function checkSearchParam() {
   }
 }
 
-//Leaflet map
+// Leaflet map
 
 function initMap() {
   if (leafletMap) {
@@ -483,22 +520,23 @@ function updateMapPins(listings) {
     }
 
     var marker = L.circleMarker([b.lat, b.lng], {
-      radius: 10,
-      fillColor: "#f0a03c",
-      color: "#f7b862",
-      weight: 2,
-      opacity: 1,
+      radius:      10,
+      fillColor:   "#f0a03c",
+      color:       "#f7b862",
+      weight:      2,
+      opacity:     1,
       fillOpacity: 0.85
     }).addTo(leafletMap);
 
-    marker.bindPopup(
-      '<div style="font-family:sans-serif;min-width:160px;">' +
-      '<strong>' + b.name + '</strong><br>' +
-      '<span style="color:#888;font-size:0.82rem;">' + b.city + ', ' + (b.state || 'NY') + '</span><br>' +
-      '<span style="color:#f0a03c;font-weight:700;font-size:1rem;">$' + b.price.toLocaleString() + '/mo</span><br>' +
-      '<a href="/buildings/' + (b._id || b.id) + '" style="color:#f0a03c;font-size:0.82rem;">View Details →</a>' +
-      '</div>'
-    );
+    var buildingId = b._id || b.id;
+    marker.bindPopup(`
+      <div style="font-family:sans-serif;min-width:160px;">
+        <strong>${b.name}</strong><br>
+        <span style="color:#888;font-size:0.82rem;">${b.city}, ${b.state || 'NY'}</span><br>
+        <span style="color:#f0a03c;font-weight:700;font-size:1rem;">$${b.price.toLocaleString()}/mo</span><br>
+        <a href="/buildings/${buildingId}" style="color:#f0a03c;font-size:0.82rem;">View Details →</a>
+      </div>
+    `);
 
     mapMarkers.push(marker);
   }
@@ -512,7 +550,7 @@ function switchToMapView() {
 
   initMap();
   updateMapPins(getFilteredListings());
-  setTimeout(function() { leafletMap.invalidateSize(); }, 100);
+  setTimeout(function () { leafletMap.invalidateSize(); }, 100);
 }
 
 function switchToGridView() {
@@ -522,7 +560,7 @@ function switchToGridView() {
   document.getElementById("viewMap").classList.remove("active");
 }
 
-// ── Toast ─────────────────────────────────────────────────────────────────────
+// Toast
 
 function showToast(message) {
   var toast = document.getElementById("toast");
@@ -531,7 +569,9 @@ function showToast(message) {
   }
   toast.textContent = message;
   toast.classList.add("show");
-  setTimeout(function() { toast.classList.remove("show"); }, 2800);
+  setTimeout(function () {
+    toast.classList.remove("show");
+  }, 2800);
 }
 
 function init() {
@@ -541,7 +581,7 @@ function init() {
 
   var tabBtns = document.querySelectorAll(".tab-btn");
   for (var i = 0; i < tabBtns.length; i++) {
-    tabBtns[i].addEventListener("click", function() {
+    tabBtns[i].addEventListener("click", function () {
       for (var j = 0; j < tabBtns.length; j++) {
         tabBtns[j].classList.remove("active");
       }
@@ -554,7 +594,7 @@ function init() {
 
   var bedBtns = document.querySelectorAll(".bed-btn");
   for (var i = 0; i < bedBtns.length; i++) {
-    bedBtns[i].addEventListener("click", function() {
+    bedBtns[i].addEventListener("click", function () {
       var val = parseInt(this.getAttribute("data-beds"));
       if (filters.beds === val) {
         filters.beds = null;
@@ -575,7 +615,7 @@ function init() {
   for (var li = 0; li < liveInputIds.length; li++) {
     var liveEl = document.getElementById(liveInputIds[li]);
     if (liveEl) {
-      liveEl.addEventListener("input", function() {
+      liveEl.addEventListener("input", function () {
         currentPage = 1;
         readFilters();
         applyAndRender();
@@ -583,9 +623,18 @@ function init() {
     }
   }
 
+  var amenityBoxes = document.querySelectorAll(".amenity-check");
+  for (var ai = 0; ai < amenityBoxes.length; ai++) {
+    amenityBoxes[ai].addEventListener("change", function () {
+      currentPage = 1;
+      readFilters();
+      applyAndRender();
+    });
+  }
+
   var applyBtn = document.getElementById("applyFilters");
   if (applyBtn) {
-    applyBtn.addEventListener("click", function() {
+    applyBtn.addEventListener("click", function () {
       currentPage = 1;
       readFilters();
       applyAndRender();
@@ -599,7 +648,7 @@ function init() {
 
   var sortSelect = document.getElementById("sortSelect");
   if (sortSelect) {
-    sortSelect.addEventListener("change", function() {
+    sortSelect.addEventListener("change", function () {
       currentSort = this.value;
       currentPage = 1;
       applyAndRender();

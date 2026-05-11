@@ -1,65 +1,70 @@
 import { Router } from 'express';
-import { getAllBuildings, getBuildingById } from '../data/buildings.js';
 import { getReviewsForBuilding, getUserReviewForBuilding } from '../data/reviews.js';
 import { getCommentsForBuilding } from '../data/comments.js';
 import { getIssuesForBuilding } from '../data/issues.js';
 import { isFavorited, getFavoritesForUser } from '../data/favorites.js';
+import { getCsvBuildings, searchCsvBuildings, getCsvBuildingById } from '../data/csvBuildings.js';
 
 const router = Router();
 
 // GET /buildings
 router.get('/', async (req, res) => {
-  try {
-    const buildings = await getAllBuildings();
-    const user = req.session.user || null;
-    const userFavorites = user ? await getFavoritesForUser(user._id) : [];
+  const user = req.session.user || null;
+  const search = (req.query.search || '').trim();
+  const page = parseInt(req.query.page) || 1;
+  let buildings;
+  if (search) {
+    buildings = searchCsvBuildings(search);
+  } else {
+    buildings = getCsvBuildings(page);
+  }
+  let favoriteIds = [];
 
-    const favoriteIds = [];
+  try {
+    const userFavorites = user ? await getFavoritesForUser(user._id) : [];
     for (let i = 0; i < userFavorites.length; i++) {
       const b = userFavorites[i];
       favoriteIds.push(b._id ? b._id.toString() : String(b.id));
     }
+  } catch (_) {}
 
-    res.render('pages/buildings', {
-      title: 'Browse Rentals - StableStay',
-      layout: 'main',
-      user,
-      buildingsJson: JSON.stringify(buildings),
-      favoritesJson: JSON.stringify(favoriteIds),
-      leaflet: true
-    });
-  } catch (e) {
-    res.status(500).render('pages/error', {
-      title: 'Error',
-      message: e.message,
-      layout: 'main'
-    });
-  }
+  res.render('pages/buildings', {
+    title: 'Browse Rentals - StableStay',
+    layout: 'main',
+    user,
+    buildingsJson: JSON.stringify(buildings),
+    favoritesJson: JSON.stringify(favoriteIds),
+    leaflet: true
+  });
 });
 
 // GET /buildings/:id
 router.get('/:id', async (req, res) => {
   try {
-    const building = await getBuildingById(req.params.id);
-    const reviews = await getReviewsForBuilding(req.params.id);
-    const comments = await getCommentsForBuilding(req.params.id);
-    const issues = await getIssuesForBuilding(req.params.id);
+    const building = getCsvBuildingById(req.params.id);
 
     const user = req.session.user || null;
-    let userReview = null;
-    let favorited = false;
+    let reviews = [], comments = [], issues = [], userReview = null, favorited = false;
+
+    try { reviews  = await getReviewsForBuilding(req.params.id); }  catch (_) {}
+    try { comments = await getCommentsForBuilding(req.params.id); } catch (_) {}
+    try { issues   = await getIssuesForBuilding(req.params.id); }   catch (_) {}
 
     if (user) {
-      userReview = await getUserReviewForBuilding(req.params.id, user._id);
-      favorited = await isFavorited(user._id, req.params.id);
+      try { userReview = await getUserReviewForBuilding(req.params.id, user._id); } catch (_) {}
+      try { favorited  = await isFavorited(user._id, req.params.id); }             catch (_) {}
     }
 
-    const formatDate = d =>
-      d ? new Date(d).toLocaleDateString('en-US', {
+    function formatDate(d) {
+      if (!d) {
+        return '';
+      }
+      return new Date(d).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric'
-      }) : '';
+      });
+    }
 
     const reviewsForTemplate = reviews.map(r => ({
       ...r,

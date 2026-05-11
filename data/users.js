@@ -11,7 +11,7 @@ async function col() {
 export async function createUser(firstName, lastName, email, password, phone, city, state, zip) {
   firstName = String(firstName || '').trim();
   lastName  = String(lastName  || '').trim();
-  email     = String(email     || '').trim().toLowerCase();
+  email = String(email     || '').trim().toLowerCase();
   password  = String(password  || '');
 
   if (firstName.length < 2) {

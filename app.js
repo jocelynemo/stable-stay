@@ -1,12 +1,12 @@
+import 'dotenv/config';
 import express from 'express';
 import exphbs from 'express-handlebars';
 import session from 'express-session';
 import configRoutes from './routes/index.js';
-import { helpers } from './helpers.js';
 
 const app = express();
 
-app.engine('handlebars', exphbs.engine({defaultLayout: 'main', helpers}));
+app.engine('handlebars', exphbs.engine({defaultLayout: 'main'}));
 app.set('view engine', 'handlebars');
 
 app.use(express.json());

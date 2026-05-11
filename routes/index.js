@@ -7,6 +7,7 @@ import favorites from './favorites.js';
 import issues from './issues.js';
 import admin from './admin.js';
 import survey from './survey.js';
+import contact from './contact.js';
 
 const constructorMethod = (app) => {
   app.get('/', async (req, res) => {
@@ -26,6 +27,7 @@ const constructorMethod = (app) => {
   app.use('/issues', issues);
   app.use('/admin', admin);
   app.use('/survey', survey);
+  app.use('/contact', contact);
 
   app.use(async (req, res) => {
     return res.status(404).render('pages/error', {

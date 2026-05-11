@@ -1,5 +1,6 @@
 /* ===== CSS Variables ===== */
 :root {
+  color-scheme: dark;
   --bg: #07090f;
   --surface: #0d1120;
   --surface2: #141c30;
@@ -632,10 +633,8 @@ img { display: block; max-width: 100%; }
 
 /* ===== ABOUT ===== */
 .about-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 72px;
-  align-items: center;
+  display: flex;
+  justify-content: center;
 }
 
 .about-img-wrap {
@@ -680,6 +679,11 @@ img { display: block; max-width: 100%; }
   margin-top: 4px;
 }
 
+.about-body {
+  max-width: 720px;
+  text-align: center;
+}
+
 .about-body p {
   color: var(--text-muted);
   margin-bottom: 16px;
@@ -688,10 +692,11 @@ img { display: block; max-width: 100%; }
 
 .about-features {
   list-style: none;
-  margin: 28px 0 36px;
+  margin: 28px auto 36px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  align-items: center;
 }
 
 .about-features li {
@@ -1068,6 +1073,11 @@ footer {
 
 .filter-input:focus { border-color: var(--accent); }
 .filter-input::placeholder { color: var(--text-dim); }
+.filter-input:-webkit-autofill,
+.filter-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--bg) inset;
+  -webkit-text-fill-color: var(--text);
+}
 
 .price-range {
   display: flex;

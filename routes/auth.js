@@ -26,30 +26,28 @@ router.get('/signout', async (req, res) => {
   });
 });
 
+function isDbError(e) {
+  const msg = e.message || '';
+  return msg.includes('ECONNREFUSED') || msg.includes('unavailable') || msg.includes('timed out');
+}
+
 //POST /login — AJAX sign-in from auth modal
 router.post('/login', async (req, res) => {
   const isAjax = req.headers['x-requested-with'] === 'XMLHttpRequest';
   try {
     const { email, password } = req.body;
     if (!email || !password) {
-      const msg = 'Email and password are required.';
-      if (isAjax) {
-        return res.status(400).json({ success: false, error: msg });
-      }
+      if (isAjax) return res.status(400).json({ success: false, error: 'Email and password are required.' });
       return res.redirect('/');
     }
 
     const user = await loginUser(email, password);
     req.session.user = user;
 
-    if (isAjax) {
-      return res.json({ success: true });
-    }
+    if (isAjax) return res.json({ success: true });
     res.redirect('/');
   } catch (e) {
-    if (isAjax) {
-      return res.status(401).json({ success: false, error: e.message });
-    }
+    if (isAjax) return res.status(401).json({ success: false, error: 'Incorrect email or password.' });
     res.redirect('/');
   }
 });
@@ -63,14 +61,16 @@ router.post('/register', async (req, res) => {
     const user = await createUser(firstName, lastName, email, password);
     req.session.user = user;
 
-    if (isAjax) {
-      return res.json({ success: true });
-    }
+    if (isAjax) return res.json({ success: true });
     res.redirect('/');
   } catch (e) {
-    if (isAjax) {
-      return res.status(400).json({ success: false, error: e.message });
+    let msg;
+    if (isDbError(e)) {
+      msg = 'Registration unavailable. Please try again later.';
+    } else {
+      msg = e.message;
     }
+    if (isAjax) return res.status(400).json({ success: false, error: msg });
     res.redirect('/');
   }
 });

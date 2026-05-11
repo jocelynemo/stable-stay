@@ -7,7 +7,7 @@ export async function getReviewsForBuilding(buildingId) {
   if (!ObjectId.isValid(buildingId)) {
     throw new Error('Invalid building id.');
   }
-  const c    = await col();
+  const c = await col();
   const docs = await c.find({ buildingId: buildingId.toString() }).sort({ createdAt: -1 }).toArray();
   const result = [];
   for (let i = 0; i < docs.length; i++) {
@@ -17,7 +17,7 @@ export async function getReviewsForBuilding(buildingId) {
 }
 
 export async function getAllReviews() {
-  const c    = await col();
+  const c = await col();
   const docs = await c.find({}).sort({ createdAt: -1 }).toArray();
   const result = [];
   for (let i = 0; i < docs.length; i++) {

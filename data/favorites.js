@@ -1,5 +1,5 @@
 import { dbConnection } from '../config/mongoConnection.js';
-import { getBuildingById } from './buildings.js';
+import { getCsvBuildingById } from './csvBuildings.js';
 
 async function col() {
   return (await dbConnection()).collection('favorites');
@@ -40,7 +40,7 @@ export async function getFavoritesForUser(userId) {
   const result = [];
   for (let i = 0; i < docs.length; i++) {
     try {
-      const building = await getBuildingById(docs[i].buildingId);
+      const building = getCsvBuildingById(docs[i].buildingId);
       result.push(building);
     } catch (e) {
     }

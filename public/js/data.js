@@ -134,11 +134,6 @@ window.BUILDINGS_STATIC = [
   }
 ];
 
-//Returns buildings from the server
-//Falls back to BUILDINGS_STATIC if the server returned an empty array
 window.getBuildings = function() {
-  if (window.BUILDINGS_BASE && window.BUILDINGS_BASE.length > 0) {
-    return window.BUILDINGS_BASE;
-  }
-  return window.BUILDINGS_STATIC;
+  return window.BUILDINGS_BASE || [];
 };
