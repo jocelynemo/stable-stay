@@ -7,9 +7,13 @@ A full-stack web application that helps users discover, filter, and analyze NYC 
    ```
    npm install
    ```
-2. Start the application:
+2. Seed database:
    ```
-   npm run
+   npm run seed
+   ```
+3. Start the application:
+   ```
+   npm start
    ```
 
 ## Team Members
