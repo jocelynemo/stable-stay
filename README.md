@@ -60,4 +60,4 @@ StableStay displays available residential buildings and apartments across NYC, i
 ### Review System
 - One review per user per building (star rating 1–5 + written feedback)
 - Edit and delete own reviews
-- Upvot
+- Upvote
