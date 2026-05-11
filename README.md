@@ -79,8 +79,8 @@ Users can:
 
 ### Filters Include
 
-- Borough
-- Rent-stabilized status
+- City
+- Ammentities
 - Violation count
 
 ---
@@ -105,7 +105,7 @@ Calculated using:
 
 ### Additional Features
 
-- Sortable violation history table
+- History
 - Violation severity explainer:
   - Minor
   - Serious
@@ -148,15 +148,7 @@ Includes support for modifying dataset-sourced buildings.
 
 # Extra Features
 
-## Direct Messaging
-
-- Messaging system between users and landlords/agents
-
 ---
-
-## Interactive Map
-
-Built using Leaflet.js or Google Maps SDK.
 
 ### Features
 
