@@ -7,7 +7,10 @@
         <li><a href="/admin" class="active">Admin</a></li>
       </ul>
       <div class="nav-actions">
-        <!-- replaced by auth.js -->
+        {{#if user}}
+          <span style="font-size:0.88rem;color:var(--text-muted);font-weight:500;padding:0 4px;">Hi, {{user.firstName}}</span>
+          <a href="/signout" class="btn btn-primary">Sign Out</a>
+        {{/if}}
       </div>
     </nav>
 
@@ -23,6 +26,8 @@
           <li><a href="#" class="admin-nav-link" data-tab="tabReviews">⭐ Reviews</a></li>
           <li><a href="#" class="admin-nav-link" data-tab="tabComments">💬 Comments</a></li>
           <li><a href="#" class="admin-nav-link" data-tab="tabUsers">👤 Users</a></li>
+          <li><a href="#" class="admin-nav-link" data-tab="tabViolations">⚠️ Violations</a></li>
+          <li><a href="#" class="admin-nav-link" data-tab="tabIssues">🚨 Issues</a></li>
         </ul>
       </aside>
 
@@ -64,6 +69,23 @@
           <div id="usersTableWrap"></div>
         </section>
 
+        <!-- VIOLATIONS -->
+        <section class="admin-section" id="tabViolations">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+            <h2 class="admin-section-title" style="margin:0;">Violations</h2>
+            <button class="btn btn-primary" id="addViolationBtn">+ Add Violation</button>
+          </div>
+          <p style="color:var(--text-muted);font-size:0.87rem;margin-bottom:20px;">Manage building violations. Toggle status between Open and Closed or delete entries.</p>
+          <div id="violationsTableWrap"></div>
+        </section>
+
+        <!-- ISSUES -->
+        <section class="admin-section" id="tabIssues">
+          <h2 class="admin-section-title">User-Reported Issues</h2>
+          <p style="color:var(--text-muted);font-size:0.87rem;margin-bottom:20px;">Issues submitted by tenants. Delete resolved or spam reports.</p>
+          <div id="issuesTableWrap"></div>
+        </section>
+
       </main>
     </div>
 
@@ -75,7 +97,7 @@
 
         <div style="display:flex;flex-direction:column;gap:14px;margin-top:8px;">
           <div class="form-row">
-            <div class="form-group"><label>Building Name</label><input type="text" id="ab_name" placeholder="e.g. The Meridian" /></div>
+            <div class="form-group"><label>Building Name</label><input type="text" id="ab_name" /></div>
             <div class="form-group"><label>Badge</label>
               <select id="ab_badge">
                 <option value="">None</option>
@@ -83,28 +105,28 @@
               </select>
             </div>
           </div>
-          <div class="form-group"><label>Address</label><input type="text" id="ab_address" placeholder="e.g. 100 Main St" /></div>
+          <div class="form-group"><label>Address</label><input type="text" id="ab_address" /></div>
           <div class="form-row">
-            <div class="form-group"><label>City</label><input type="text" id="ab_city" placeholder="Jersey City" /></div>
-            <div class="form-group"><label>Zip</label><input type="text" id="ab_zip" placeholder="07302" /></div>
+            <div class="form-group"><label>City</label><input type="text" id="ab_city" /></div>
+            <div class="form-group"><label>Zip</label><input type="text" id="ab_zip" /></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Price / mo ($)</label><input type="number" id="ab_price" placeholder="2000" /></div>
-            <div class="form-group"><label>Units</label><input type="number" id="ab_units" placeholder="48" /></div>
+            <div class="form-group"><label>Price / mo ($)</label><input type="number" id="ab_price" /></div>
+            <div class="form-group"><label>Units</label><input type="number" id="ab_units" /></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Beds</label><input type="number" id="ab_beds" placeholder="2" /></div>
-            <div class="form-group"><label>Baths</label><input type="number" id="ab_baths" placeholder="1" /></div>
-            <div class="form-group"><label>Sqft</label><input type="number" id="ab_sqft" placeholder="850" /></div>
+            <div class="form-group"><label>Beds</label><input type="number" id="ab_beds" /></div>
+            <div class="form-group"><label>Baths</label><input type="number" id="ab_baths" /></div>
+            <div class="form-group"><label>Sqft</label><input type="number" id="ab_sqft" /></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Borough / County</label><input type="text" id="ab_borough" placeholder="Hudson County" /></div>
-            <div class="form-group"><label>Block</label><input type="text" id="ab_block" placeholder="1042" /></div>
-            <div class="form-group"><label>Lot</label><input type="text" id="ab_lot" placeholder="7" /></div>
+            <div class="form-group"><label>Borough / County</label><input type="text" id="ab_borough" /></div>
+            <div class="form-group"><label>Block</label><input type="text" id="ab_block" /></div>
+            <div class="form-group"><label>Lot</label><input type="text" id="ab_lot" /></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Latitude</label><input type="number" id="ab_lat" placeholder="40.7178" step="0.0001" /></div>
-            <div class="form-group"><label>Longitude</label><input type="number" id="ab_lng" placeholder="-74.0431" step="0.0001" /></div>
+            <div class="form-group"><label>Latitude</label><input type="number" id="ab_lat" step="0.0001" /></div>
+            <div class="form-group"><label>Longitude</label><input type="number" id="ab_lng" step="0.0001" /></div>
           </div>
           <div class="form-group">
             <label>Rent Stabilized</label>
@@ -130,9 +152,61 @@
       </div>
     </div>
 
+    <!-- ADD VIOLATION MODAL -->
+    <div class="modal-overlay" id="addViolationModal">
+      <div class="modal" style="max-width:520px;">
+        <button class="modal-close" id="closeAddViolation">✕</button>
+        <h2 class="modal-title">Add Violation</h2>
+        <div style="display:flex;flex-direction:column;gap:14px;margin-top:8px;">
+          <div class="form-group">
+            <label>Building</label>
+            <select id="av_buildingId"></select>
+          </div>
+          <div class="form-group">
+            <label>Code</label>
+            <input type="text" id="av_code" />
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea id="av_description" rows="3" style="resize:vertical;"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Severity</label>
+              <select id="av_severity">
+                <option>Minor</option>
+                <option>Serious</option>
+                <option>Hazardous</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select id="av_status">
+                <option>Open</option>
+                <option>Closed</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Date</label>
+              <input type="date" id="av_date" />
+            </div>
+          </div>
+          <div id="addViolationError" style="color:var(--danger);font-size:0.85rem;display:none;"></div>
+          <button class="btn btn-primary full-width" id="submitAddViolation">Add Violation</button>
+        </div>
+      </div>
+    </div>
+
     <!-- TOAST -->
     <div class="toast" id="toast"></div>
 
-    <script src="/data.js"></script>
-    <script src="/auth.js"></script>
-    <script src="/admin.js"></script>
+    <script>
+      window.ADMIN_BUILDINGS   = {{{buildingsJson}}};
+      window.ADMIN_USERS       = {{{usersJson}}};
+      window.ADMIN_REVIEWS     = {{{reviewsJson}}};
+      window.ADMIN_COMMENTS    = {{{commentsJson}}};
+      window.ADMIN_ISSUES      = {{{issuesJson}}};
+      window.ADMIN_VIOLATIONS  = {{{violationsJson}}};
+    </script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/admin-interactive.js"></script>
